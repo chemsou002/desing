@@ -1,8 +1,5 @@
-import React, { useState, useEffect, useMemo } from 'react';
-import { Link } from 'react-router-dom';
-import { useTranslation } from 'react-i18next';
-import { useAuth } from '@/contexts/AuthContext';
-import { useLanguage } from '@/contexts/LanguageContext';
+import { useState, useEffect, useMemo } from "react";
+import { trpc } from "@/providers/trpc";
 import {
   BookOpen,
   CheckCircle,
@@ -12,21 +9,17 @@ import {
   Map,
   ChevronDown,
   ChevronUp,
-  Cpu,
-  Award,
-  MessageCircle,
   Lock,
-  PlayCircle,
-  Circle,
-  TrendingUp,
   Star,
-} from 'lucide-react';
-import { Progress } from '@/components/ui/progress';
+  TrendingUp,
+  Award,
+  PlayCircle,
+} from "lucide-react";
 import {
   Collapsible,
   CollapsibleTrigger,
   CollapsibleContent,
-} from '@/components/ui/collapsible';
+} from "@/components/ui/collapsible";
 
 /* ------------------------------------------------------------------ */
 /*  Types                                                              */
@@ -41,122 +34,20 @@ interface RoadmapStage {
   id: number;
   name: string;
   description: string;
-  status: 'completed' | 'current' | 'locked';
+  status: "completed" | "current" | "locked";
   topics: { name: string; locked: boolean }[];
 }
-
-interface ActivityItem {
-  id: number;
-  text: string;
-  time: string;
-  color: string;
-}
-
-/* ------------------------------------------------------------------ */
-/*  Demo Data                                                          */
-/* ------------------------------------------------------------------ */
-
-const DEMO_SKILLS: SkillData[] = [
-  { name: 'برمجة PLC', value: 75 },
-  { name: 'إلكترونيات القوة', value: 45 },
-  { name: 'روبوتكس', value: 20 },
-  { name: 'محاكاة', value: 60 },
-  { name: 'نظرية', value: 80 },
-];
-
-const DEMO_ROADMAP: RoadmapStage[] = [
-  {
-    id: 1,
-    name: 'أساسيات الأتمتة',
-    description: 'اكتسب المفاهيم الأساسية في الأتمتة الصناعية',
-    status: 'completed',
-    topics: [
-      { name: 'مقدمة في الأتمتة الصناعية', locked: false },
-      { name: 'مكونات أنظمة التحكم', locked: false },
-      { name: 'قراءة المخططات الكهربية', locked: false },
-    ],
-  },
-  {
-    id: 2,
-    name: 'برمجة PLC',
-    description: 'تعلم برمجة المتحكمات المنطقية القابلة للبرمجة',
-    status: 'current',
-    topics: [
-      { name: 'مفاهيم PLC الأساسية', locked: false },
-      { name: 'لغة Ladder Logic', locked: true },
-      { name: 'Timers و Counters', locked: true },
-    ],
-  },
-  {
-    id: 3,
-    name: 'إلكترونيات القوة',
-    description: 'استكشف عالم إلكترونيات القوة والمحولات',
-    status: 'locked',
-    topics: [
-      { name: 'أشباه الموصلات', locked: true },
-      { name: 'المحولات Rectifiers', locked: true },
-      { name: 'العاكسات Inverters', locked: true },
-    ],
-  },
-  {
-    id: 4,
-    name: 'روبوتكس وARM',
-    description: 'ادخل إلى عالم الروبوتيكس ومعالجات ARM',
-    status: 'locked',
-    topics: [
-      { name: 'ميكانيكا الروبوت', locked: true },
-      { name: 'الحساسات والمحركات', locked: true },
-      { name: 'برمجة الذراع الصناعي', locked: true },
-    ],
-  },
-  {
-    id: 5,
-    name: 'مشاريع متقدمة',
-    description: 'طبق ما تعلمته على مشاريع صناعية حقيقية',
-    status: 'locked',
-    topics: [
-      { name: 'خط الإنتاج الآلي', locked: true },
-      { name: 'خلية إنتاج روبوتية', locked: true },
-      { name: 'نظام تحكم متكامل', locked: true },
-    ],
-  },
-];
-
-const DEMO_ACTIVITIES: ActivityItem[] = [
-  { id: 1, text: 'أكملت درس "لغة Ladder Logic - الجزء 1"', time: 'منذ ساعتين', color: '#006D77' },
-  { id: 2, text: 'حصلت على 50 نقطة خبرة', time: 'منذ 5 ساعات', color: '#E9C46A' },
-  { id: 3, text: 'بدأت محاكاة "نظام الإضاءة الذكي"', time: 'منذ يوم', color: '#006D77' },
-  { id: 4, text: 'سجلت في دورة "برمجة PLC للمبتدئين"', time: 'منذ 3 أيام', color: '#E5E5E5' },
-];
 
 /* ------------------------------------------------------------------ */
 /*  Helpers                                                            */
 /* ------------------------------------------------------------------ */
 
-function getLevelInfo(xp: number): { level: number; label: string; current: number; next: number } {
-  const thresholds = [0, 1000, 2000, 3000, 4000, 6000];
-  let level = 1;
-  for (let i = 1; i < thresholds.length; i++) {
-    if (xp >= thresholds[i]) level = i + 1;
-    else break;
-  }
-  if (level > 5) level = 5;
-  const current = thresholds[level - 1];
-  const next = thresholds[level] || thresholds[thresholds.length - 1];
-  const labels = ['مبتدئ', 'متعلم', 'متوسط', 'متقدم', 'خبير'];
-  return { level, label: labels[level - 1] || 'خبير', current, next };
-}
-
-/* ------------------------------------------------------------------ */
-/*  Sub-components                                                     */
-/* ------------------------------------------------------------------ */
-
 /** Animated counter that counts up on mount */
-const AnimatedNumber: React.FC<{ value: number; duration?: number; suffix?: string }> = ({
-  value,
-  duration = 800,
-  suffix = '',
-}) => {
+const AnimatedNumber: React.FC<{
+  value: number;
+  duration?: number;
+  suffix?: string;
+}> = ({ value, duration = 800, suffix = "" }) => {
   const [display, setDisplay] = useState(0);
 
   useEffect(() => {
@@ -182,7 +73,10 @@ const AnimatedNumber: React.FC<{ value: number; duration?: number; suffix?: stri
 };
 
 /** Conic-gradient level badge with animated border */
-const LevelBadge: React.FC<{ level: number; progress: number }> = ({ level, progress }) => {
+const LevelBadge: React.FC<{ level: number; progress: number }> = ({
+  level,
+  progress,
+}) => {
   const [animatedProgress, setAnimatedProgress] = useState(0);
 
   useEffect(() => {
@@ -196,11 +90,13 @@ const LevelBadge: React.FC<{ level: number; progress: number }> = ({ level, prog
         className="relative w-44 h-44 rounded-full flex items-center justify-center"
         style={{
           background: `conic-gradient(#006D77 ${animatedProgress * 3.6}deg, #E5E5E5 0deg)`,
-          transition: 'background 1.2s ease-out',
+          transition: "background 1.2s ease-out",
         }}
       >
         <div className="w-36 h-36 rounded-full bg-white flex flex-col items-center justify-center shadow-sm">
-          <span className="text-5xl font-extrabold text-[#1A1A1A] font-mono-tech">{level}</span>
+          <span className="text-5xl font-extrabold text-[#1A1A1A] font-mono-tech">
+            {level}
+          </span>
         </div>
       </div>
       <span className="text-sm text-[#1A1A1A]/50 font-medium">المستوى</span>
@@ -209,7 +105,10 @@ const LevelBadge: React.FC<{ level: number; progress: number }> = ({ level, prog
 };
 
 /** SVG donut progress ring */
-const ProgressRing: React.FC<{ progress: number; size?: number }> = ({ progress, size = 160 }) => {
+const ProgressRing: React.FC<{ progress: number; size?: number }> = ({
+  progress,
+  size = 160,
+}) => {
   const [animatedProgress, setAnimatedProgress] = useState(0);
   const strokeWidth = 10;
   const radius = (size - strokeWidth) / 2;
@@ -221,7 +120,7 @@ const ProgressRing: React.FC<{ progress: number; size?: number }> = ({ progress,
   }, [progress]);
 
   return (
-    <div className="flex flex-col items-center gap-2">
+    <div className="flex flex-col items-center gap-2 relative">
       <svg width={size} height={size} className="-rotate-90">
         <circle
           cx={size / 2}
@@ -240,11 +139,13 @@ const ProgressRing: React.FC<{ progress: number; size?: number }> = ({ progress,
           strokeWidth={strokeWidth}
           strokeLinecap="round"
           strokeDasharray={`${(animatedProgress / 100) * circumference} ${circumference}`}
-          style={{ transition: 'stroke-dasharray 1s ease-out' }}
+          style={{ transition: "stroke-dasharray 1s ease-out" }}
         />
       </svg>
       <div className="absolute flex flex-col items-center justify-center" style={{ width: size, height: size }}>
-        <span className="text-3xl font-bold text-[#1A1A1A] font-mono-tech">{animatedProgress}%</span>
+        <span className="text-3xl font-bold text-[#1A1A1A] font-mono-tech">
+          {animatedProgress}%
+        </span>
       </div>
       <span className="text-xs text-[#1A1A1A]/50 mt-1">التقدم الكلي</span>
     </div>
@@ -274,7 +175,7 @@ const RadarChart: React.FC<{ skills: SkillData[] }> = ({ skills }) => {
         const p = pointFor(i, (l / levels) * 100);
         points.push(`${p.x},${p.y}`);
       }
-      polygons.push(points.join(' '));
+      polygons.push(points.join(" "));
     }
     return polygons;
   }, []);
@@ -283,7 +184,7 @@ const RadarChart: React.FC<{ skills: SkillData[] }> = ({ skills }) => {
     return skills.map((s, i) => pointFor(i, s.value));
   }, [skills]);
 
-  const dataPolygon = dataPoints.map((p) => `${p.x},${p.y}`).join(' ');
+  const dataPolygon = dataPoints.map((p) => `${p.x},${p.y}`).join(" ");
 
   const labelPositions = useMemo(() => {
     return skills.map((s, i) => {
@@ -316,7 +217,7 @@ const RadarChart: React.FC<{ skills: SkillData[] }> = ({ skills }) => {
           fill="rgba(0,109,119,0.15)"
           stroke="#006D77"
           strokeWidth={2}
-          style={{ transition: 'all 0.8s ease-out' }}
+          style={{ transition: "all 0.8s ease-out" }}
         />
         {/* Data points */}
         {dataPoints.map((p, idx) => (
@@ -331,7 +232,7 @@ const RadarChart: React.FC<{ skills: SkillData[] }> = ({ skills }) => {
             textAnchor="middle"
             dominantBaseline="middle"
             className="text-[11px] fill-[#1A1A1A]/50"
-            style={{ fontSize: 11, fontFamily: 'Cairo, sans-serif' }}
+            style={{ fontSize: 11, fontFamily: "Cairo, sans-serif" }}
           >
             {l.name}
           </text>
@@ -347,30 +248,30 @@ const RoadmapStageCard: React.FC<{
   index: number;
   isLast: boolean;
 }> = ({ stage, index, isLast }) => {
-  const [open, setOpen] = useState(stage.status === 'current');
+  const [open, setOpen] = useState(stage.status === "current");
 
   const iconBg =
-    stage.status === 'completed'
-      ? 'bg-[#006D77] text-white'
-      : stage.status === 'current'
-      ? 'bg-white border-2 border-[#006D77] text-[#006D77]'
-      : 'bg-[#E5E5E5] text-[#1A1A1A]/30';
+    stage.status === "completed"
+      ? "bg-[#006D77] text-white"
+      : stage.status === "current"
+        ? "bg-white border-2 border-[#006D77] text-[#006D77]"
+        : "bg-[#E5E5E5] text-[#1A1A1A]/30";
 
   const nameColor =
-    stage.status === 'completed'
-      ? 'text-[#1A1A1A]'
-      : stage.status === 'current'
-      ? 'text-[#006D77]'
-      : 'text-[#1A1A1A]/30';
+    stage.status === "completed"
+      ? "text-[#1A1A1A]"
+      : stage.status === "current"
+        ? "text-[#006D77]"
+        : "text-[#1A1A1A]/30";
 
-  const lineColor = stage.status === 'completed' ? '#006D77' : '#E5E5E5';
+  const lineColor = stage.status === "completed" ? "#006D77" : "#E5E5E5";
 
   const badge =
-    stage.status === 'completed' ? (
+    stage.status === "completed" ? (
       <span className="px-2 py-0.5 rounded-full bg-green-100 text-green-600 text-[10px] font-medium">
         مكتمل
       </span>
-    ) : stage.status === 'current' ? (
+    ) : stage.status === "current" ? (
       <span className="px-2 py-0.5 rounded-full bg-[#006D77]/10 text-[#006D77] text-[10px] font-medium">
         جاري
       </span>
@@ -389,7 +290,7 @@ const RoadmapStageCard: React.FC<{
           style={{
             top: 40,
             right: 19,
-            height: 'calc(100% - 20px)',
+            height: "calc(100% - 20px)",
             backgroundColor: lineColor,
           }}
         />
@@ -400,14 +301,14 @@ const RoadmapStageCard: React.FC<{
         <div
           className={`w-10 h-10 rounded-full flex items-center justify-center ${iconBg} transition-all duration-300`}
         >
-          {stage.status === 'locked' ? (
+          {stage.status === "locked" ? (
             <Lock className="w-4 h-4" />
           ) : (
             <Star className="w-4 h-4" />
           )}
         </div>
         {/* Pulse ring for current stage */}
-        {stage.status === 'current' && (
+        {stage.status === "current" && (
           <div className="absolute inset-0 rounded-full border-2 border-[#006D77]/30 animate-ping" />
         )}
       </div>
@@ -419,7 +320,9 @@ const RoadmapStageCard: React.FC<{
             <button className="w-full flex items-center justify-between gap-2 text-right hover:bg-[#FDFBF5] rounded-xl p-2 -m-2 transition-colors">
               <div className="flex items-center gap-2">
                 {badge}
-                <h4 className={`font-semibold text-base ${nameColor}`}>{stage.name}</h4>
+                <h4 className={`font-semibold text-base ${nameColor}`}>
+                  {stage.name}
+                </h4>
               </div>
               {open ? (
                 <ChevronUp className="w-4 h-4 text-[#1A1A1A]/30 shrink-0" />
@@ -429,7 +332,9 @@ const RoadmapStageCard: React.FC<{
             </button>
           </CollapsibleTrigger>
 
-          <p className="text-xs text-[#1A1A1A]/50 mt-1 px-2">{stage.description}</p>
+          <p className="text-xs text-[#1A1A1A]/50 mt-1 px-2">
+            {stage.description}
+          </p>
 
           <CollapsibleContent className="mt-3 space-y-2">
             {stage.topics.map((topic, tIdx) => (
@@ -438,7 +343,9 @@ const RoadmapStageCard: React.FC<{
                 className="flex items-center gap-3 p-3 rounded-xl bg-[#FDFBF5] border border-[#E5E5E5] hover:bg-[#006D77]/5 transition-colors cursor-default"
               >
                 <BookOpen className="w-4 h-4 text-[#006D77]/60 shrink-0" />
-                <span className="text-sm text-[#1A1A1A]/70 flex-1">{topic.name}</span>
+                <span className="text-sm text-[#1A1A1A]/70 flex-1">
+                  {topic.name}
+                </span>
                 {topic.locked ? (
                   <Lock className="w-3.5 h-3.5 text-[#1A1A1A]/20" />
                 ) : (
@@ -458,27 +365,12 @@ const RoadmapStageCard: React.FC<{
 /* ------------------------------------------------------------------ */
 
 const Dashboard: React.FC = () => {
-  const { t } = useTranslation();
-  const { user, isLoading } = useAuth();
-  const { direction } = useLanguage();
-  const isRTL = direction === 'rtl';
+  const { data: dashboard, isLoading } = trpc.learning.dashboard.useQuery();
 
-  /* ---- demo XP / progress (replace with real data later) ---- */
-  const demoXp = 1850;
-  const demoTotalProgress = 42;
-
-  const levelInfo = getLevelInfo(user?.xp || demoXp);
-  const xpProgress = Math.min(
-    100,
-    Math.round(((user?.xp || demoXp) - levelInfo.current) / (levelInfo.next - levelInfo.current) * 100)
-  );
-
-  /* ---- course progress demo ---- */
-  const courseProgressList = [
-    { name: 'برمجة PLC للمبتدئين', progress: 75 },
-    { name: 'إلكترونيات القوة', progress: 30 },
-    { name: 'روبوتكس وARM', progress: 10 },
-  ];
+  const { data: authUser } = trpc.auth.me.useQuery(undefined, {
+    staleTime: 1000 * 60 * 5,
+    retry: false,
+  });
 
   /* ---- entrance animation state ---- */
   const [mounted, setMounted] = useState(false);
@@ -488,9 +380,9 @@ const Dashboard: React.FC = () => {
   }, []);
 
   /* ---- loading skeleton ---- */
-  if (isLoading) {
+  if (isLoading || !dashboard) {
     return (
-      <div className="min-h-screen pt-24 pb-16 bg-[#FDFBF5]" dir={direction}>
+      <div className="min-h-screen pt-24 pb-16 bg-[#FDFBF5]" dir="rtl">
         <div className="max-w-6xl mx-auto px-4 space-y-6">
           <div className="h-64 bg-[#E5E5E5]/50 rounded-2xl animate-pulse" />
           <div className="grid md:grid-cols-2 gap-6">
@@ -502,16 +394,24 @@ const Dashboard: React.FC = () => {
     );
   }
 
+  const userName = authUser?.name || "متعلم";
+
   return (
-    <div className="min-h-screen pt-20 pb-12 bg-[#FDFBF5] relative overflow-hidden" dir={direction}>
+    <div className="min-h-screen pt-20 pb-12 bg-[#FDFBF5] relative overflow-hidden" dir="rtl">
       {/* Decorative background blobs */}
       <div
         className="absolute -top-32 -left-32 w-[400px] h-[400px] rounded-full pointer-events-none"
-        style={{ background: 'radial-gradient(circle, rgba(0,109,119,0.04) 0%, transparent 70%)' }}
+        style={{
+          background:
+            "radial-gradient(circle, rgba(0,109,119,0.04) 0%, transparent 70%)",
+        }}
       />
       <div
         className="absolute bottom-0 right-0 w-[300px] h-[300px] rounded-full pointer-events-none"
-        style={{ background: 'radial-gradient(circle, rgba(0,109,119,0.04) 0%, transparent 70%)' }}
+        style={{
+          background:
+            "radial-gradient(circle, rgba(0,109,119,0.04) 0%, transparent 70%)",
+        }}
       />
 
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
@@ -519,20 +419,25 @@ const Dashboard: React.FC = () => {
         {/*  SECTION: Level Hero                         */}
         {/* ============================================ */}
         <section
-          className={`mb-8 transition-all duration-500 ${mounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}
+          className={`mb-8 transition-all duration-500 ${
+            mounted ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"
+          }`}
         >
           <div className="bg-white rounded-2xl border border-[#E5E5E5] p-6 sm:p-8 shadow-sm">
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-center">
               {/* Left — Level Badge */}
               <div className="flex justify-center">
-                <LevelBadge level={levelInfo.level} progress={xpProgress} />
+                <LevelBadge
+                  level={dashboard.level}
+                  progress={dashboard.xpProgress}
+                />
               </div>
 
               {/* Center — Welcome + XP + Stats */}
               <div className="flex flex-col gap-4">
                 <div>
                   <h1 className="text-2xl font-bold text-[#1A1A1A]">
-                    مرحباً، {user?.name || 'متعلم'}!
+                    مرحباً، {userName}!
                   </h1>
                   <p className="text-sm text-[#1A1A1A]/50 mt-1">
                     تتبع تقدمك في رحلة تعلم الأتمتة
@@ -544,27 +449,29 @@ const Dashboard: React.FC = () => {
                   <div className="flex items-center gap-2 px-4 py-2 rounded-full bg-[#E9C46A]/20">
                     <Zap className="w-5 h-5 text-[#B8860B]" />
                     <span className="font-mono-tech font-bold text-[#B8860B] text-lg">
-                      <AnimatedNumber value={user?.xp || demoXp} />
+                      <AnimatedNumber value={dashboard.xp} />
                     </span>
-                    <span className="text-xs text-[#B8860B]/70">نقطة خبرة</span>
+                    <span className="text-xs text-[#B8860B]/70">
+                      نقطة خبرة
+                    </span>
                   </div>
                   <span className="px-3 py-1 rounded-full bg-[#006D77]/10 text-[#006D77] text-sm font-medium">
-                    {levelInfo.label}
+                    {dashboard.levelLabel}
                   </span>
                 </div>
 
                 {/* XP Progress Bar */}
                 <div>
                   <div className="flex items-center justify-between text-[10px] text-[#1A1A1A]/40 mb-1">
-                    <span>{levelInfo.current} XP</span>
-                    <span>{levelInfo.next} XP</span>
+                    <span>{dashboard.currentXp} XP</span>
+                    <span>{dashboard.nextXp} XP</span>
                   </div>
                   <div className="h-2 bg-[#E5E5E5] rounded-full overflow-hidden">
                     <div
-                      className="h-full rounded-full shimmer-btn"
+                      className="h-full rounded-full bg-[#006D77]"
                       style={{
-                        width: `${xpProgress}%`,
-                        transition: 'width 1.2s ease-out',
+                        width: `${dashboard.xpProgress}%`,
+                        transition: "width 1.2s ease-out",
                       }}
                     />
                   </div>
@@ -574,23 +481,31 @@ const Dashboard: React.FC = () => {
                 <div className="grid grid-cols-3 gap-3">
                   <div className="bg-[#FDFBF5] rounded-xl border border-[#E5E5E5] p-3 text-center">
                     <BookOpen className="w-5 h-5 text-[#006D77] mx-auto mb-1" />
-                    <span className="text-xs text-[#1A1A1A]/50 block">الدورات</span>
+                    <span className="text-xs text-[#1A1A1A]/50 block">
+                      الدورات
+                    </span>
                     <span className="font-mono-tech font-bold text-[#1A1A1A]">
-                      <AnimatedNumber value={user?.enrolledCourses?.length || 1} />
+                      <AnimatedNumber value={dashboard.totalCourses} />
                     </span>
                   </div>
                   <div className="bg-[#FDFBF5] rounded-xl border border-[#E5E5E5] p-3 text-center">
                     <CheckCircle className="w-5 h-5 text-green-500 mx-auto mb-1" />
-                    <span className="text-xs text-[#1A1A1A]/50 block">مكتملة</span>
+                    <span className="text-xs text-[#1A1A1A]/50 block">
+                      مكتملة
+                    </span>
                     <span className="font-mono-tech font-bold text-[#1A1A1A]">
-                      <AnimatedNumber value={0} />
+                      <AnimatedNumber
+                        value={dashboard.totalCompletedCourses}
+                      />
                     </span>
                   </div>
                   <div className="bg-[#FDFBF5] rounded-xl border border-[#E5E5E5] p-3 text-center">
                     <Clock className="w-5 h-5 text-[#F59E0B] mx-auto mb-1" />
-                    <span className="text-xs text-[#1A1A1A]/50 block">ساعات</span>
+                    <span className="text-xs text-[#1A1A1A]/50 block">
+                      ساعات
+                    </span>
                     <span className="font-mono-tech font-bold text-[#1A1A1A]">
-                      <AnimatedNumber value={8} />
+                      <AnimatedNumber value={dashboard.totalStudyHours} />
                     </span>
                   </div>
                 </div>
@@ -599,23 +514,27 @@ const Dashboard: React.FC = () => {
               {/* Right — Overall Progress Ring */}
               <div className="flex flex-col items-center gap-4">
                 <div className="relative">
-                  <ProgressRing progress={demoTotalProgress} />
+                  <ProgressRing progress={dashboard.overallProgress} />
                 </div>
 
                 {/* Course Mini Progress Bars */}
                 <div className="w-full max-w-[200px] space-y-2">
-                  {courseProgressList.map((c, idx) => (
+                  {dashboard.pathProgress.map((c, idx) => (
                     <div key={idx} className="group">
                       <div className="flex items-center justify-between text-[11px] mb-0.5">
-                        <span className="text-[#1A1A1A]/60 truncate">{c.name}</span>
-                        <span className="font-mono-tech text-[#006D77]">{c.progress}%</span>
+                        <span className="text-[#1A1A1A]/60 truncate">
+                          {c.name}
+                        </span>
+                        <span className="font-mono-tech text-[#006D77]">
+                          {c.progressPercent}%
+                        </span>
                       </div>
                       <div className="h-1 bg-[#E5E5E5] rounded-full overflow-hidden">
                         <div
                           className="h-full bg-[#006D77] rounded-full"
                           style={{
-                            width: `${c.progress}%`,
-                            transition: 'width 1s ease-out',
+                            width: `${c.progressPercent}%`,
+                            transition: "width 1s ease-out",
                             transitionDelay: `${0.3 + idx * 0.15}s`,
                           }}
                         />
@@ -632,36 +551,42 @@ const Dashboard: React.FC = () => {
         {/*  SECTION: Skill Breakdown + Roadmap          */}
         {/* ============================================ */}
         <section
-          className={`grid grid-cols-1 lg:grid-cols-5 gap-6 mb-8 transition-all duration-500 delay-150 ${mounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}
+          className={`grid grid-cols-1 lg:grid-cols-5 gap-6 mb-8 transition-all duration-500 delay-150 ${
+            mounted ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"
+          }`}
         >
           {/* Left — Skill Breakdown (2/5) */}
           <div className="lg:col-span-2">
             <div className="bg-white rounded-2xl border border-[#E5E5E5] p-6 shadow-sm hover:shadow-md transition-shadow">
               <div className="flex items-center gap-2 mb-1">
                 <BarChart3 className="w-5 h-5 text-[#006D77]" />
-                <h2 className="text-lg font-semibold text-[#1A1A1A]">تحليل المهارات</h2>
+                <h2 className="text-lg font-semibold text-[#1A1A1A]">
+                  تحليل المهارات
+                </h2>
               </div>
               <p className="text-xs text-[#1A1A1A]/50 mb-4">
                 تقدمك في مجالات الأتمتة المختلفة
               </p>
 
               {/* Radar Chart */}
-              <RadarChart skills={DEMO_SKILLS} />
+              <RadarChart skills={dashboard.skills} />
 
               {/* Skill Bars */}
               <div className="mt-5 space-y-3">
-                {DEMO_SKILLS.map((skill, idx) => (
+                {dashboard.skills.map((skill, idx) => (
                   <div key={idx} className="group">
                     <div className="flex items-center justify-between text-xs mb-1">
                       <span className="text-[#1A1A1A]/70">{skill.name}</span>
-                      <span className="font-mono-tech text-[#006D77]">{skill.value}%</span>
+                      <span className="font-mono-tech text-[#006D77]">
+                        {skill.value}%
+                      </span>
                     </div>
                     <div className="h-1.5 bg-[#E5E5E5] rounded-full overflow-hidden">
                       <div
                         className="h-full bg-[#006D77] rounded-full"
                         style={{
                           width: `${skill.value}%`,
-                          transition: 'width 0.8s ease-out',
+                          transition: "width 0.8s ease-out",
                           transitionDelay: `${0.5 + idx * 0.1}s`,
                         }}
                       />
@@ -677,19 +602,21 @@ const Dashboard: React.FC = () => {
             <div className="bg-white rounded-2xl border border-[#E5E5E5] p-6 shadow-sm hover:shadow-md transition-shadow">
               <div className="flex items-center gap-2 mb-1">
                 <Map className="w-5 h-5 text-[#006D77]" />
-                <h2 className="text-lg font-semibold text-[#1A1A1A]">خارطة التعلم</h2>
+                <h2 className="text-lg font-semibold text-[#1A1A1A]">
+                  خارطة التعلم
+                </h2>
               </div>
               <p className="text-xs text-[#1A1A1A]/50 mb-5">
                 مراحل رحلتك التعليمية في عالم الأتمتة
               </p>
 
               <div className="space-y-1 pr-2">
-                {DEMO_ROADMAP.map((stage, idx) => (
+                {dashboard.roadmap.map((stage, idx) => (
                   <RoadmapStageCard
                     key={stage.id}
                     stage={stage}
                     index={idx}
-                    isLast={idx === DEMO_ROADMAP.length - 1}
+                    isLast={idx === dashboard.roadmap.length - 1}
                   />
                 ))}
               </div>
@@ -701,14 +628,18 @@ const Dashboard: React.FC = () => {
         {/*  SECTION: Activity + Quick Actions           */}
         {/* ============================================ */}
         <section
-          className={`grid grid-cols-1 lg:grid-cols-5 gap-6 transition-all duration-500 delay-300 ${mounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}
+          className={`grid grid-cols-1 lg:grid-cols-5 gap-6 transition-all duration-500 delay-300 ${
+            mounted ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"
+          }`}
         >
           {/* Left — Activity Timeline (3/5) */}
           <div className="lg:col-span-3">
             <div className="bg-white rounded-2xl border border-[#E5E5E5] p-6 shadow-sm hover:shadow-md transition-shadow">
               <div className="flex items-center gap-2 mb-5">
                 <Clock className="w-5 h-5 text-[#006D77]" />
-                <h2 className="text-lg font-semibold text-[#1A1A1A]">آخر النشاطات</h2>
+                <h2 className="text-lg font-semibold text-[#1A1A1A]">
+                  آخر النشاطات
+                </h2>
               </div>
 
               <div className="relative pr-4">
@@ -716,28 +647,37 @@ const Dashboard: React.FC = () => {
                 <div className="absolute right-[7px] top-2 bottom-2 w-0.5 bg-[#E5E5E5]" />
 
                 <div className="space-y-5">
-                  {DEMO_ACTIVITIES.map((activity, idx) => (
-                    <div
-                      key={activity.id}
-                      className="relative flex gap-3 items-start"
-                      style={{
-                        animationDelay: `${idx * 100}ms`,
-                      }}
-                    >
-                      {/* Dot */}
+                  {dashboard.activities.length > 0 ? (
+                    dashboard.activities.map((activity, idx) => (
                       <div
-                        className="relative z-10 w-4 h-4 rounded-full mt-1 shrink-0 border-2 border-white shadow-sm"
-                        style={{ backgroundColor: activity.color }}
-                      />
-                      {/* Content */}
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm text-[#1A1A1A] leading-relaxed">
-                          {activity.text}
-                        </p>
-                        <span className="text-[11px] text-[#1A1A1A]/40">{activity.time}</span>
+                        key={activity.id}
+                        className="relative flex gap-3 items-start"
+                        style={{ animationDelay: `${idx * 100}ms` }}
+                      >
+                        {/* Dot */}
+                        <div
+                          className="relative z-10 w-4 h-4 rounded-full mt-1 shrink-0 border-2 border-white shadow-sm"
+                          style={{ backgroundColor: activity.color }}
+                        />
+                        {/* Content */}
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm text-[#1A1A1A] leading-relaxed">
+                            {activity.text}
+                          </p>
+                          <span className="text-[11px] text-[#1A1A1A]/40">
+                            {new Date(activity.time).toLocaleDateString("ar-SA", {
+                              hour: "2-digit",
+                              minute: "2-digit",
+                            })}
+                          </span>
+                        </div>
                       </div>
+                    ))
+                  ) : (
+                    <div className="text-center py-8 text-[#1A1A1A]/40 text-sm">
+                      لا توجد نشاطات حالية. ابدأ بتعلم درس جديد!
                     </div>
-                  ))}
+                  )}
                 </div>
               </div>
             </div>
@@ -748,26 +688,70 @@ const Dashboard: React.FC = () => {
             <div className="bg-white rounded-2xl border border-[#E5E5E5] p-6 shadow-sm hover:shadow-md transition-shadow">
               <div className="flex items-center gap-2 mb-5">
                 <Zap className="w-5 h-5 text-[#006D77]" />
-                <h2 className="text-lg font-semibold text-[#1A1A1A]">إجراءات سريعة</h2>
+                <h2 className="text-lg font-semibold text-[#1A1A1A]">
+                  إجراءات سريعة
+                </h2>
               </div>
 
               <div className="grid grid-cols-2 gap-3">
                 {[
-                  { icon: BookOpen, label: 'استكشف الدورات', href: '/courses', color: '#006D77' },
-                  { icon: Cpu, label: 'المحاكي التفاعلي', href: '#', color: '#006D77' },
-                  { icon: Award, label: 'اختبر نفسك', href: '#', color: '#B8860B' },
-                  { icon: MessageCircle, label: 'تواصل مع المدربين', href: '#', color: '#006D77' },
+                  {
+                    icon: PlayCircle,
+                    label: "استمر بالتعلم",
+                    action: () => {
+                      // Find first uncompleted lesson
+                      const currentPath = dashboard.pathProgress.find(
+                        (p) => p.progressPercent < 100
+                      );
+                      if (currentPath) {
+                        alert(`استمر في: ${currentPath.name}`);
+                      }
+                    },
+                    color: "#006D77",
+                  },
+                  {
+                    icon: Award,
+                    label: "اكمل درساً",
+                    action: () => {
+                      // Complete first lesson of first path as demo
+                      const lessonToComplete =
+                        dashboard.roadmap[0]?.topics[0];
+                      if (lessonToComplete) {
+                        alert("جاري اكمال الدرس... (Demo)");
+                      }
+                    },
+                    color: "#B8860B",
+                  },
+                  {
+                    icon: TrendingUp,
+                    label: "عرض المسارات",
+                    action: () => {
+                      alert("عرض جميع المسارات");
+                    },
+                    color: "#006D77",
+                  },
+                  {
+                    icon: BookOpen,
+                    label: "المحاكي التفاعلي",
+                    action: () => {
+                      alert("فتح المحاكي");
+                    },
+                    color: "#006D77",
+                  },
                 ].map((action, idx) => (
-                  <Link
+                  <button
                     key={idx}
-                    to={action.href}
+                    onClick={action.action}
                     className="flex flex-col items-center gap-2 p-4 rounded-xl border border-[#E5E5E5] bg-[#FDFBF5] hover:bg-[#006D77]/5 hover:-translate-y-0.5 active:scale-[0.97] transition-all duration-200"
                   >
-                    <action.icon className="w-6 h-6" style={{ color: action.color }} />
+                    <action.icon
+                      className="w-6 h-6"
+                      style={{ color: action.color }}
+                    />
                     <span className="text-xs text-[#1A1A1A]/70 text-center leading-tight">
                       {action.label}
                     </span>
-                  </Link>
+                  </button>
                 ))}
               </div>
             </div>

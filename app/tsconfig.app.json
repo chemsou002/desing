@@ -40,8 +40,6 @@
     "noUncheckedSideEffectImports": true
   },
   "include": [
-    "src",
-    "contracts",
-    "db"
+    "src"
   ]
 }

@@ -1,4 +1,4 @@
-import { useOAuthAuth as useAuth } from "@/hooks/useAuth";
+import { useAuth } from "@/hooks/useAuth";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import {
   DropdownMenu,

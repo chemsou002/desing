@@ -1,19 +1,14 @@
 import { trpc } from "@/providers/trpc";
 import { useCallback, useEffect, useMemo } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router";
 import { LOGIN_PATH } from "@/const";
 
-type UseOAuthAuthOptions = {
+type UseAuthOptions = {
   redirectOnUnauthenticated?: boolean;
   redirectPath?: string;
 };
 
-/**
- * useOAuthAuth - Low-level hook for tRPC OAuth authentication.
- * Most components should use useAuth from @/contexts/AuthContext instead,
- * which integrates both OAuth and local auth with app data (XP, courses, etc.).
- */
-export function useOAuthAuth(options?: UseOAuthAuthOptions) {
+export function useAuth(options?: UseAuthOptions) {
   const { redirectOnUnauthenticated = false, redirectPath = LOGIN_PATH } =
     options ?? {};
 

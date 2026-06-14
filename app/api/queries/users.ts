@@ -15,10 +15,6 @@ export async function findUserByUnionId(unionId: string) {
 
 export async function upsertUser(data: InsertUser) {
   const values = { ...data };
-  // Ensure provider is set
-  if (!values.provider) {
-    values.provider = "kimi";
-  }
   const updateSet: Partial<InsertUser> = {
     lastSignInAt: new Date(),
     ...data,
