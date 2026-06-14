@@ -1,353 +1,778 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '@/contexts/AuthContext';
 import { useLanguage } from '@/contexts/LanguageContext';
-import { getCourseById } from '@/data/courses';
 import {
-  PlayCircle,
   BookOpen,
-  Award,
-  Cpu,
-  Zap,
-  ChevronRight,
-  Clock,
   CheckCircle,
-  Circle,
+  Clock,
+  Zap,
   BarChart3,
+  Map,
+  ChevronDown,
+  ChevronUp,
+  Cpu,
+  Award,
+  MessageCircle,
+  Lock,
+  PlayCircle,
+  Circle,
+  TrendingUp,
+  Star,
 } from 'lucide-react';
+import { Progress } from '@/components/ui/progress';
+import {
+  Collapsible,
+  CollapsibleTrigger,
+  CollapsibleContent,
+} from '@/components/ui/collapsible';
+
+/* ------------------------------------------------------------------ */
+/*  Types                                                              */
+/* ------------------------------------------------------------------ */
+
+interface SkillData {
+  name: string;
+  value: number; // 0-100
+}
+
+interface RoadmapStage {
+  id: number;
+  name: string;
+  description: string;
+  status: 'completed' | 'current' | 'locked';
+  topics: { name: string; locked: boolean }[];
+}
+
+interface ActivityItem {
+  id: number;
+  text: string;
+  time: string;
+  color: string;
+}
+
+/* ------------------------------------------------------------------ */
+/*  Demo Data                                                          */
+/* ------------------------------------------------------------------ */
+
+const DEMO_SKILLS: SkillData[] = [
+  { name: 'برمجة PLC', value: 75 },
+  { name: 'إلكترونيات القوة', value: 45 },
+  { name: 'روبوتكس', value: 20 },
+  { name: 'محاكاة', value: 60 },
+  { name: 'نظرية', value: 80 },
+];
+
+const DEMO_ROADMAP: RoadmapStage[] = [
+  {
+    id: 1,
+    name: 'أساسيات الأتمتة',
+    description: 'اكتسب المفاهيم الأساسية في الأتمتة الصناعية',
+    status: 'completed',
+    topics: [
+      { name: 'مقدمة في الأتمتة الصناعية', locked: false },
+      { name: 'مكونات أنظمة التحكم', locked: false },
+      { name: 'قراءة المخططات الكهربية', locked: false },
+    ],
+  },
+  {
+    id: 2,
+    name: 'برمجة PLC',
+    description: 'تعلم برمجة المتحكمات المنطقية القابلة للبرمجة',
+    status: 'current',
+    topics: [
+      { name: 'مفاهيم PLC الأساسية', locked: false },
+      { name: 'لغة Ladder Logic', locked: true },
+      { name: 'Timers و Counters', locked: true },
+    ],
+  },
+  {
+    id: 3,
+    name: 'إلكترونيات القوة',
+    description: 'استكشف عالم إلكترونيات القوة والمحولات',
+    status: 'locked',
+    topics: [
+      { name: 'أشباه الموصلات', locked: true },
+      { name: 'المحولات Rectifiers', locked: true },
+      { name: 'العاكسات Inverters', locked: true },
+    ],
+  },
+  {
+    id: 4,
+    name: 'روبوتكس وARM',
+    description: 'ادخل إلى عالم الروبوتيكس ومعالجات ARM',
+    status: 'locked',
+    topics: [
+      { name: 'ميكانيكا الروبوت', locked: true },
+      { name: 'الحساسات والمحركات', locked: true },
+      { name: 'برمجة الذراع الصناعي', locked: true },
+    ],
+  },
+  {
+    id: 5,
+    name: 'مشاريع متقدمة',
+    description: 'طبق ما تعلمته على مشاريع صناعية حقيقية',
+    status: 'locked',
+    topics: [
+      { name: 'خط الإنتاج الآلي', locked: true },
+      { name: 'خلية إنتاج روبوتية', locked: true },
+      { name: 'نظام تحكم متكامل', locked: true },
+    ],
+  },
+];
+
+const DEMO_ACTIVITIES: ActivityItem[] = [
+  { id: 1, text: 'أكملت درس "لغة Ladder Logic - الجزء 1"', time: 'منذ ساعتين', color: '#006D77' },
+  { id: 2, text: 'حصلت على 50 نقطة خبرة', time: 'منذ 5 ساعات', color: '#E9C46A' },
+  { id: 3, text: 'بدأت محاكاة "نظام الإضاءة الذكي"', time: 'منذ يوم', color: '#006D77' },
+  { id: 4, text: 'سجلت في دورة "برمجة PLC للمبتدئين"', time: 'منذ 3 أيام', color: '#E5E5E5' },
+];
+
+/* ------------------------------------------------------------------ */
+/*  Helpers                                                            */
+/* ------------------------------------------------------------------ */
+
+function getLevelInfo(xp: number): { level: number; label: string; current: number; next: number } {
+  const thresholds = [0, 1000, 2000, 3000, 4000, 6000];
+  let level = 1;
+  for (let i = 1; i < thresholds.length; i++) {
+    if (xp >= thresholds[i]) level = i + 1;
+    else break;
+  }
+  if (level > 5) level = 5;
+  const current = thresholds[level - 1];
+  const next = thresholds[level] || thresholds[thresholds.length - 1];
+  const labels = ['مبتدئ', 'متعلم', 'متوسط', 'متقدم', 'خبير'];
+  return { level, label: labels[level - 1] || 'خبير', current, next };
+}
+
+/* ------------------------------------------------------------------ */
+/*  Sub-components                                                     */
+/* ------------------------------------------------------------------ */
+
+/** Animated counter that counts up on mount */
+const AnimatedNumber: React.FC<{ value: number; duration?: number; suffix?: string }> = ({
+  value,
+  duration = 800,
+  suffix = '',
+}) => {
+  const [display, setDisplay] = useState(0);
+
+  useEffect(() => {
+    let start = 0;
+    const startTime = performance.now();
+    const animate = (now: number) => {
+      const elapsed = now - startTime;
+      const progress = Math.min(elapsed / duration, 1);
+      const eased = 1 - Math.pow(1 - progress, 3); // easeOutCubic
+      start = Math.floor(eased * value);
+      setDisplay(start);
+      if (progress < 1) requestAnimationFrame(animate);
+    };
+    requestAnimationFrame(animate);
+  }, [value, duration]);
+
+  return (
+    <span className="font-mono-tech">
+      {display.toLocaleString()}
+      {suffix}
+    </span>
+  );
+};
+
+/** Conic-gradient level badge with animated border */
+const LevelBadge: React.FC<{ level: number; progress: number }> = ({ level, progress }) => {
+  const [animatedProgress, setAnimatedProgress] = useState(0);
+
+  useEffect(() => {
+    const timer = setTimeout(() => setAnimatedProgress(progress), 100);
+    return () => clearTimeout(timer);
+  }, [progress]);
+
+  return (
+    <div className="flex flex-col items-center gap-2">
+      <div
+        className="relative w-44 h-44 rounded-full flex items-center justify-center"
+        style={{
+          background: `conic-gradient(#006D77 ${animatedProgress * 3.6}deg, #E5E5E5 0deg)`,
+          transition: 'background 1.2s ease-out',
+        }}
+      >
+        <div className="w-36 h-36 rounded-full bg-white flex flex-col items-center justify-center shadow-sm">
+          <span className="text-5xl font-extrabold text-[#1A1A1A] font-mono-tech">{level}</span>
+        </div>
+      </div>
+      <span className="text-sm text-[#1A1A1A]/50 font-medium">المستوى</span>
+    </div>
+  );
+};
+
+/** SVG donut progress ring */
+const ProgressRing: React.FC<{ progress: number; size?: number }> = ({ progress, size = 160 }) => {
+  const [animatedProgress, setAnimatedProgress] = useState(0);
+  const strokeWidth = 10;
+  const radius = (size - strokeWidth) / 2;
+  const circumference = 2 * Math.PI * radius;
+
+  useEffect(() => {
+    const timer = setTimeout(() => setAnimatedProgress(progress), 200);
+    return () => clearTimeout(timer);
+  }, [progress]);
+
+  return (
+    <div className="flex flex-col items-center gap-2">
+      <svg width={size} height={size} className="-rotate-90">
+        <circle
+          cx={size / 2}
+          cy={size / 2}
+          r={radius}
+          fill="none"
+          stroke="#E5E5E5"
+          strokeWidth={strokeWidth}
+        />
+        <circle
+          cx={size / 2}
+          cy={size / 2}
+          r={radius}
+          fill="none"
+          stroke="#006D77"
+          strokeWidth={strokeWidth}
+          strokeLinecap="round"
+          strokeDasharray={`${(animatedProgress / 100) * circumference} ${circumference}`}
+          style={{ transition: 'stroke-dasharray 1s ease-out' }}
+        />
+      </svg>
+      <div className="absolute flex flex-col items-center justify-center" style={{ width: size, height: size }}>
+        <span className="text-3xl font-bold text-[#1A1A1A] font-mono-tech">{animatedProgress}%</span>
+      </div>
+      <span className="text-xs text-[#1A1A1A]/50 mt-1">التقدم الكلي</span>
+    </div>
+  );
+};
+
+/** CSS-only radar chart (pentagon) */
+const RadarChart: React.FC<{ skills: SkillData[] }> = ({ skills }) => {
+  const size = 220;
+  const center = size / 2;
+  const maxRadius = 80;
+  const levels = 4;
+
+  const angleFor = (i: number) => (Math.PI * 2 * i) / 5 - Math.PI / 2;
+
+  const pointFor = (i: number, value: number) => {
+    const angle = angleFor(i);
+    const r = (value / 100) * maxRadius;
+    return { x: center + r * Math.cos(angle), y: center + r * Math.sin(angle) };
+  };
+
+  const gridPolygons = useMemo(() => {
+    const polygons = [];
+    for (let l = 1; l <= levels; l++) {
+      const points = [];
+      for (let i = 0; i < 5; i++) {
+        const p = pointFor(i, (l / levels) * 100);
+        points.push(`${p.x},${p.y}`);
+      }
+      polygons.push(points.join(' '));
+    }
+    return polygons;
+  }, []);
+
+  const dataPoints = useMemo(() => {
+    return skills.map((s, i) => pointFor(i, s.value));
+  }, [skills]);
+
+  const dataPolygon = dataPoints.map((p) => `${p.x},${p.y}`).join(' ');
+
+  const labelPositions = useMemo(() => {
+    return skills.map((s, i) => {
+      const angle = angleFor(i);
+      const r = maxRadius + 22;
+      return {
+        x: center + r * Math.cos(angle),
+        y: center + r * Math.sin(angle),
+        name: s.name,
+      };
+    });
+  }, [skills]);
+
+  return (
+    <div className="flex flex-col items-center">
+      <svg width={size} height={size + 20} viewBox={`0 0 ${size} ${size + 20}`}>
+        {/* Grid pentagons */}
+        {gridPolygons.map((points, idx) => (
+          <polygon
+            key={idx}
+            points={points}
+            fill="none"
+            stroke="#E5E5E5"
+            strokeWidth={1}
+          />
+        ))}
+        {/* Data polygon */}
+        <polygon
+          points={dataPolygon}
+          fill="rgba(0,109,119,0.15)"
+          stroke="#006D77"
+          strokeWidth={2}
+          style={{ transition: 'all 0.8s ease-out' }}
+        />
+        {/* Data points */}
+        {dataPoints.map((p, idx) => (
+          <circle key={idx} cx={p.x} cy={p.y} r={5} fill="#006D77" />
+        ))}
+        {/* Labels */}
+        {labelPositions.map((l, idx) => (
+          <text
+            key={idx}
+            x={l.x}
+            y={l.y}
+            textAnchor="middle"
+            dominantBaseline="middle"
+            className="text-[11px] fill-[#1A1A1A]/50"
+            style={{ fontSize: 11, fontFamily: 'Cairo, sans-serif' }}
+          >
+            {l.name}
+          </text>
+        ))}
+      </svg>
+    </div>
+  );
+};
+
+/** Roadmap stage card */
+const RoadmapStageCard: React.FC<{
+  stage: RoadmapStage;
+  index: number;
+  isLast: boolean;
+}> = ({ stage, index, isLast }) => {
+  const [open, setOpen] = useState(stage.status === 'current');
+
+  const iconBg =
+    stage.status === 'completed'
+      ? 'bg-[#006D77] text-white'
+      : stage.status === 'current'
+      ? 'bg-white border-2 border-[#006D77] text-[#006D77]'
+      : 'bg-[#E5E5E5] text-[#1A1A1A]/30';
+
+  const nameColor =
+    stage.status === 'completed'
+      ? 'text-[#1A1A1A]'
+      : stage.status === 'current'
+      ? 'text-[#006D77]'
+      : 'text-[#1A1A1A]/30';
+
+  const lineColor = stage.status === 'completed' ? '#006D77' : '#E5E5E5';
+
+  const badge =
+    stage.status === 'completed' ? (
+      <span className="px-2 py-0.5 rounded-full bg-green-100 text-green-600 text-[10px] font-medium">
+        مكتمل
+      </span>
+    ) : stage.status === 'current' ? (
+      <span className="px-2 py-0.5 rounded-full bg-[#006D77]/10 text-[#006D77] text-[10px] font-medium">
+        جاري
+      </span>
+    ) : (
+      <span className="px-2 py-0.5 rounded-full bg-[#E5E5E5] text-[#1A1A1A]/30 text-[10px] font-medium">
+        قفل
+      </span>
+    );
+
+  return (
+    <div className="relative flex gap-4" style={{ animationDelay: `${index * 100}ms` }}>
+      {/* Connecting line */}
+      {!isLast && (
+        <div
+          className="absolute w-0.5"
+          style={{
+            top: 40,
+            right: 19,
+            height: 'calc(100% - 20px)',
+            backgroundColor: lineColor,
+          }}
+        />
+      )}
+
+      {/* Icon */}
+      <div className="relative z-10 shrink-0">
+        <div
+          className={`w-10 h-10 rounded-full flex items-center justify-center ${iconBg} transition-all duration-300`}
+        >
+          {stage.status === 'locked' ? (
+            <Lock className="w-4 h-4" />
+          ) : (
+            <Star className="w-4 h-4" />
+          )}
+        </div>
+        {/* Pulse ring for current stage */}
+        {stage.status === 'current' && (
+          <div className="absolute inset-0 rounded-full border-2 border-[#006D77]/30 animate-ping" />
+        )}
+      </div>
+
+      {/* Content */}
+      <div className="flex-1 min-w-0 pb-4">
+        <Collapsible open={open} onOpenChange={setOpen}>
+          <CollapsibleTrigger asChild>
+            <button className="w-full flex items-center justify-between gap-2 text-right hover:bg-[#FDFBF5] rounded-xl p-2 -m-2 transition-colors">
+              <div className="flex items-center gap-2">
+                {badge}
+                <h4 className={`font-semibold text-base ${nameColor}`}>{stage.name}</h4>
+              </div>
+              {open ? (
+                <ChevronUp className="w-4 h-4 text-[#1A1A1A]/30 shrink-0" />
+              ) : (
+                <ChevronDown className="w-4 h-4 text-[#1A1A1A]/30 shrink-0" />
+              )}
+            </button>
+          </CollapsibleTrigger>
+
+          <p className="text-xs text-[#1A1A1A]/50 mt-1 px-2">{stage.description}</p>
+
+          <CollapsibleContent className="mt-3 space-y-2">
+            {stage.topics.map((topic, tIdx) => (
+              <div
+                key={tIdx}
+                className="flex items-center gap-3 p-3 rounded-xl bg-[#FDFBF5] border border-[#E5E5E5] hover:bg-[#006D77]/5 transition-colors cursor-default"
+              >
+                <BookOpen className="w-4 h-4 text-[#006D77]/60 shrink-0" />
+                <span className="text-sm text-[#1A1A1A]/70 flex-1">{topic.name}</span>
+                {topic.locked ? (
+                  <Lock className="w-3.5 h-3.5 text-[#1A1A1A]/20" />
+                ) : (
+                  <CheckCircle className="w-3.5 h-3.5 text-green-500" />
+                )}
+              </div>
+            ))}
+          </CollapsibleContent>
+        </Collapsible>
+      </div>
+    </div>
+  );
+};
+
+/* ------------------------------------------------------------------ */
+/*  Main Dashboard                                                     */
+/* ------------------------------------------------------------------ */
 
 const Dashboard: React.FC = () => {
   const { t } = useTranslation();
-  const { user } = useAuth();
-  const { direction, currentLang } = useLanguage();
+  const { user, isLoading } = useAuth();
+  const { direction } = useLanguage();
   const isRTL = direction === 'rtl';
-  const [selectedCourseId, setSelectedCourseId] = useState<string>(
-    user?.enrolledCourses[0] || ''
-  );
-  const [activeTab, setActiveTab] = useState<'lessons' | 'simulator'>('lessons');
 
-  if (!user || user.enrolledCourses.length === 0) {
+  /* ---- demo XP / progress (replace with real data later) ---- */
+  const demoXp = 1850;
+  const demoTotalProgress = 42;
+
+  const levelInfo = getLevelInfo(user?.xp || demoXp);
+  const xpProgress = Math.min(
+    100,
+    Math.round(((user?.xp || demoXp) - levelInfo.current) / (levelInfo.next - levelInfo.current) * 100)
+  );
+
+  /* ---- course progress demo ---- */
+  const courseProgressList = [
+    { name: 'برمجة PLC للمبتدئين', progress: 75 },
+    { name: 'إلكترونيات القوة', progress: 30 },
+    { name: 'روبوتكس وARM', progress: 10 },
+  ];
+
+  /* ---- entrance animation state ---- */
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => {
+    const t = setTimeout(() => setMounted(true), 50);
+    return () => clearTimeout(t);
+  }, []);
+
+  /* ---- loading skeleton ---- */
+  if (isLoading) {
     return (
-      <div className="min-h-screen pt-24 pb-16 bg-[#FDFBF5] flex items-center justify-center" dir={direction}>
-        <div className="text-center max-w-md mx-auto px-4">
-          <div className="w-20 h-20 rounded-full bg-[#006D77]/10 flex items-center justify-center mx-auto mb-6">
-            <BookOpen className="w-10 h-10 text-[#006D77]" />
+      <div className="min-h-screen pt-24 pb-16 bg-[#FDFBF5]" dir={direction}>
+        <div className="max-w-6xl mx-auto px-4 space-y-6">
+          <div className="h-64 bg-[#E5E5E5]/50 rounded-2xl animate-pulse" />
+          <div className="grid md:grid-cols-2 gap-6">
+            <div className="h-80 bg-[#E5E5E5]/50 rounded-2xl animate-pulse" />
+            <div className="h-80 bg-[#E5E5E5]/50 rounded-2xl animate-pulse" />
           </div>
-          <h2 className="text-2xl font-bold text-[#1A1A1A] mb-3">
-            {isRTL ? 'لا توجد دورات مسجلة' : 'No Enrolled Courses'}
-          </h2>
-          <p className="text-[#1A1A1A]/50 mb-6">{t('dashboard.noCourses')}</p>
-          <Link
-            to="/courses"
-            className="shimmer-btn inline-flex items-center gap-2 px-6 py-3 rounded-xl text-white font-semibold"
-          >
-            <BookOpen className="w-4 h-4" />
-            {t('courses.viewAll')}
-          </Link>
         </div>
       </div>
     );
   }
 
-  const selectedCourse = getCourseById(selectedCourseId) || getCourseById(user.enrolledCourses[0]);
-  const progress = selectedCourse
-    ? user.courseProgress[selectedCourse.id] || 0
-    : 0;
-
   return (
-    <div className="min-h-screen pt-20 pb-8 bg-[#FDFBF5]" dir={direction}>
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        {/* Welcome Bar */}
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
-          <div>
-            <h1 className="text-xl sm:text-2xl font-bold text-[#1A1A1A]">
-              {t('dashboard.welcome')}، {user.name}!
-            </h1>
-            <p className="text-sm text-[#1A1A1A]/50 mt-1">
-              {isRTL ? 'تابع رحلتك التعليمية من حيث توقفت' : 'Continue your learning journey'}
-            </p>
-          </div>
-          <div className="flex items-center gap-3">
-            <div className="flex items-center gap-2 px-4 py-2 rounded-xl bg-[#E9C46A]/20">
-              <Zap className="w-5 h-5 text-[#B8860B]" />
-              <span className="font-mono-tech font-bold text-[#B8860B]">
-                {user.xp} XP
-              </span>
-            </div>
-            <div className="flex items-center gap-2 px-4 py-2 rounded-xl bg-[#006D77]/10">
-              <BarChart3 className="w-5 h-5 text-[#006D77]" />
-              <span className="font-mono-tech font-bold text-[#006D77]">
-                {progress}%
-              </span>
-            </div>
-          </div>
-        </div>
+    <div className="min-h-screen pt-20 pb-12 bg-[#FDFBF5] relative overflow-hidden" dir={direction}>
+      {/* Decorative background blobs */}
+      <div
+        className="absolute -top-32 -left-32 w-[400px] h-[400px] rounded-full pointer-events-none"
+        style={{ background: 'radial-gradient(circle, rgba(0,109,119,0.04) 0%, transparent 70%)' }}
+      />
+      <div
+        className="absolute bottom-0 right-0 w-[300px] h-[300px] rounded-full pointer-events-none"
+        style={{ background: 'radial-gradient(circle, rgba(0,109,119,0.04) 0%, transparent 70%)' }}
+      />
 
-        {/* Main Layout: 3 Columns */}
-        <div className="grid lg:grid-cols-12 gap-6">
-          {/* Left Sidebar - My Courses */}
-          <div className="lg:col-span-3">
-            <div className="bg-white rounded-2xl border border-[#E5E5E5] p-4">
-              <h3 className="font-semibold text-sm text-[#1A1A1A] mb-4 flex items-center gap-2">
-                <BookOpen className="w-4 h-4 text-[#006D77]" />
-                {t('dashboard.myCourses')}
-              </h3>
-              <div className="space-y-2">
-                {user.enrolledCourses.map((courseId: string) => {
-                  const c = getCourseById(courseId);
-                  if (!c) return null;
-                  const prog = user.courseProgress[courseId] || 0;
-                  const isActive = selectedCourseId === courseId;
-                  return (
-                    <button
-                      key={courseId}
-                      onClick={() => setSelectedCourseId(courseId)}
-                      className={`w-full flex items-center gap-3 p-3 rounded-xl text-start transition-colors ${
-                        isActive
-                          ? 'bg-[#006D77]/10 border border-[#006D77]/20'
-                          : 'hover:bg-[#FDFBF5] border border-transparent'
-                      }`}
-                    >
-                      <img
-                        src={c.image}
-                        alt={c.title[currentLang as 'ar' | 'en']}
-                        className="w-10 h-10 rounded-lg object-cover shrink-0"
-                      />
-                      <div className="flex-1 min-w-0">
-                        <div className="text-xs font-medium text-[#1A1A1A] truncate">
-                          {c.title[currentLang as 'ar' | 'en']}
-                        </div>
-                        <div className="flex items-center gap-2 mt-1">
-                          <div className="flex-1 h-1.5 bg-[#E5E5E5] rounded-full overflow-hidden">
-                            <div
-                              className="h-full bg-[#006D77] rounded-full transition-all"
-                              style={{ width: `${prog}%` }}
-                            />
-                          </div>
-                          <span className="text-[10px] font-mono-tech text-[#006D77]">
-                            {prog}%
-                          </span>
-                        </div>
-                      </div>
-                    </button>
-                  );
-                })}
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+        {/* ============================================ */}
+        {/*  SECTION: Level Hero                         */}
+        {/* ============================================ */}
+        <section
+          className={`mb-8 transition-all duration-500 ${mounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}
+        >
+          <div className="bg-white rounded-2xl border border-[#E5E5E5] p-6 sm:p-8 shadow-sm">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-center">
+              {/* Left — Level Badge */}
+              <div className="flex justify-center">
+                <LevelBadge level={levelInfo.level} progress={xpProgress} />
               </div>
-            </div>
-          </div>
 
-          {/* Center - Video & Lessons */}
-          <div className="lg:col-span-6">
-            {/* Video Player */}
-            <div className="bg-white rounded-2xl border border-[#E5E5E5] overflow-hidden mb-4">
-              <div className="relative aspect-video bg-[#0D1B2A] flex items-center justify-center">
-                <img
-                  src={selectedCourse?.image}
-                  alt=""
-                  className="absolute inset-0 w-full h-full object-cover opacity-60"
-                />
-                <div className="relative z-10 text-center">
-                  <button className="w-16 h-16 rounded-full bg-white/90 flex items-center justify-center shadow-lg hover:scale-110 transition-transform mx-auto mb-3">
-                    <PlayCircle className="w-8 h-8 text-[#006D77]" />
-                  </button>
-                  <p className="text-white/80 text-sm">
-                    {isRTL ? 'اضغط للبدء' : 'Click to start'}
+              {/* Center — Welcome + XP + Stats */}
+              <div className="flex flex-col gap-4">
+                <div>
+                  <h1 className="text-2xl font-bold text-[#1A1A1A]">
+                    مرحباً، {user?.name || 'متعلم'}!
+                  </h1>
+                  <p className="text-sm text-[#1A1A1A]/50 mt-1">
+                    تتبع تقدمك في رحلة تعلم الأتمتة
                   </p>
                 </div>
-              </div>
-              <div className="p-4">
-                <h3 className="font-bold text-[#1A1A1A]">
-                  {selectedCourse?.title[currentLang as 'ar' | 'en']}
-                </h3>
-                <div className="flex items-center gap-4 mt-2 text-xs text-[#1A1A1A]/50">
-                  <span className="flex items-center gap-1">
-                    <BookOpen className="w-3.5 h-3.5" />
-                    {selectedCourse?.lessons} {t('courses.lessons')}
-                  </span>
-                  <span className="flex items-center gap-1">
-                    <Clock className="w-3.5 h-3.5" />
-                    {selectedCourse?.hours}h
-                  </span>
-                  <span className="flex items-center gap-1">
-                    <Award className="w-3.5 h-3.5" />
-                    {t('courses.detail.certificate')}
+
+                {/* XP Badge */}
+                <div className="flex items-center gap-3">
+                  <div className="flex items-center gap-2 px-4 py-2 rounded-full bg-[#E9C46A]/20">
+                    <Zap className="w-5 h-5 text-[#B8860B]" />
+                    <span className="font-mono-tech font-bold text-[#B8860B] text-lg">
+                      <AnimatedNumber value={user?.xp || demoXp} />
+                    </span>
+                    <span className="text-xs text-[#B8860B]/70">نقطة خبرة</span>
+                  </div>
+                  <span className="px-3 py-1 rounded-full bg-[#006D77]/10 text-[#006D77] text-sm font-medium">
+                    {levelInfo.label}
                   </span>
                 </div>
-              </div>
-            </div>
 
-            {/* Tabs */}
-            <div className="bg-white rounded-2xl border border-[#E5E5E5] overflow-hidden">
-              <div className="flex border-b border-[#E5E5E5]">
-                <button
-                  onClick={() => setActiveTab('lessons')}
-                  className={`flex-1 px-4 py-3 text-sm font-medium transition-colors ${
-                    activeTab === 'lessons'
-                      ? 'text-[#006D77] border-b-2 border-[#006D77]'
-                      : 'text-[#1A1A1A]/40 hover:text-[#1A1A1A]/60'
-                  }`}
-                >
-                  {t('dashboard.lessons')}
-                </button>
-                <button
-                  onClick={() => setActiveTab('simulator')}
-                  className={`flex-1 px-4 py-3 text-sm font-medium transition-colors ${
-                    activeTab === 'simulator'
-                      ? 'text-[#006D77] border-b-2 border-[#006D77]'
-                      : 'text-[#1A1A1A]/40 hover:text-[#1A1A1A]/60'
-                  }`}
-                >
-                  {t('dashboard.simulator')}
-                </button>
-              </div>
-
-              <div className="p-4">
-                {activeTab === 'lessons' ? (
-                  <div className="space-y-1 max-h-80 overflow-y-auto">
-                    {selectedCourse?.curriculum.map((lesson, idx) => (
-                      <div
-                        key={lesson.id}
-                        className="flex items-center gap-3 p-3 rounded-xl hover:bg-[#FDFBF5] transition-colors cursor-pointer group"
-                      >
-                        {idx < Math.floor((progress / 100) * (selectedCourse?.curriculum.length || 1)) ? (
-                          <CheckCircle className="w-5 h-5 text-green-500 shrink-0" />
-                        ) : (
-                          <Circle className="w-5 h-5 text-[#E5E5E5] group-hover:text-[#006D77] shrink-0" />
-                        )}
-                        <div className="flex-1 min-w-0">
-                          <div className="text-sm font-medium text-[#1A1A1A] truncate">
-                            {lesson.title[currentLang as 'ar' | 'en']}
-                          </div>
-                          <div className="flex items-center gap-2 mt-0.5">
-                            <span className="text-xs text-[#1A1A1A]/40">{lesson.duration}</span>
-                          </div>
-                        </div>
-                        <PlayCircle className="w-4 h-4 text-[#006D77] opacity-0 group-hover:opacity-100 transition-opacity shrink-0" />
-                      </div>
-                    ))}
+                {/* XP Progress Bar */}
+                <div>
+                  <div className="flex items-center justify-between text-[10px] text-[#1A1A1A]/40 mb-1">
+                    <span>{levelInfo.current} XP</span>
+                    <span>{levelInfo.next} XP</span>
                   </div>
-                ) : (
-                  <div className="trunk-grid rounded-xl aspect-video flex items-center justify-center">
-                    <div className="text-center">
-                      <Cpu className="w-12 h-12 text-[#006D77] mx-auto mb-3" />
-                      <p className="text-white/80 text-sm mb-4">
-                        {isRTL ? 'محاكي PLC التفاعلي' : 'Interactive PLC Simulator'}
-                      </p>
-                      <div className="flex items-center gap-4 justify-center">
-                        <div className="w-16 h-10 rounded bg-[#006D77]/20 border border-[#006D77] flex items-center justify-center">
-                          <Zap className="w-4 h-4 text-[#00B4D8]" />
-                        </div>
-                        <div className="w-20 h-0.5 bg-[#006D77]/40" />
-                        <div className="w-12 h-12 rounded-full bg-[#006D77]/20 border border-[#006D77] flex items-center justify-center">
-                          <div className="w-4 h-4 rounded-full bg-green-400 animate-pulse" />
-                        </div>
-                      </div>
-                      <p className="text-white/40 text-xs mt-4">
-                        {isRTL ? 'قم بتوصيل الدائرة وتشغيل المحاكاة' : 'Connect the circuit and run simulation'}
-                      </p>
-                    </div>
+                  <div className="h-2 bg-[#E5E5E5] rounded-full overflow-hidden">
+                    <div
+                      className="h-full rounded-full shimmer-btn"
+                      style={{
+                        width: `${xpProgress}%`,
+                        transition: 'width 1.2s ease-out',
+                      }}
+                    />
                   </div>
-                )}
-              </div>
-            </div>
-          </div>
+                </div>
 
-          {/* Right Panel - Progress */}
-          <div className="lg:col-span-3">
-            <div className="bg-white rounded-2xl border border-[#E5E5E5] p-4">
-              <h3 className="font-semibold text-sm text-[#1A1A1A] mb-4 flex items-center gap-2">
-                <BarChart3 className="w-4 h-4 text-[#006D77]" />
-                {t('dashboard.progress')}
-              </h3>
-
-              {/* Circular Progress */}
-              <div className="flex flex-col items-center mb-6">
-                <div className="relative w-28 h-28">
-                  <svg className="w-full h-full -rotate-90" viewBox="0 0 100 100">
-                    <circle
-                      cx="50"
-                      cy="50"
-                      r="42"
-                      fill="none"
-                      stroke="#E5E5E5"
-                      strokeWidth="8"
-                    />
-                    <circle
-                      cx="50"
-                      cy="50"
-                      r="42"
-                      fill="none"
-                      stroke="#006D77"
-                      strokeWidth="8"
-                      strokeLinecap="round"
-                      strokeDasharray={`${progress * 2.64} ${264 - progress * 2.64}`}
-                      className="transition-all duration-1000"
-                    />
-                  </svg>
-                  <div className="absolute inset-0 flex flex-col items-center justify-center">
-                    <span className="text-2xl font-bold text-[#1A1A1A] font-mono-tech">
-                      {progress}%
+                {/* Mini Stat Cards */}
+                <div className="grid grid-cols-3 gap-3">
+                  <div className="bg-[#FDFBF5] rounded-xl border border-[#E5E5E5] p-3 text-center">
+                    <BookOpen className="w-5 h-5 text-[#006D77] mx-auto mb-1" />
+                    <span className="text-xs text-[#1A1A1A]/50 block">الدورات</span>
+                    <span className="font-mono-tech font-bold text-[#1A1A1A]">
+                      <AnimatedNumber value={user?.enrolledCourses?.length || 1} />
+                    </span>
+                  </div>
+                  <div className="bg-[#FDFBF5] rounded-xl border border-[#E5E5E5] p-3 text-center">
+                    <CheckCircle className="w-5 h-5 text-green-500 mx-auto mb-1" />
+                    <span className="text-xs text-[#1A1A1A]/50 block">مكتملة</span>
+                    <span className="font-mono-tech font-bold text-[#1A1A1A]">
+                      <AnimatedNumber value={0} />
+                    </span>
+                  </div>
+                  <div className="bg-[#FDFBF5] rounded-xl border border-[#E5E5E5] p-3 text-center">
+                    <Clock className="w-5 h-5 text-[#F59E0B] mx-auto mb-1" />
+                    <span className="text-xs text-[#1A1A1A]/50 block">ساعات</span>
+                    <span className="font-mono-tech font-bold text-[#1A1A1A]">
+                      <AnimatedNumber value={8} />
                     </span>
                   </div>
                 </div>
               </div>
 
-              {/* Stats */}
-              <div className="space-y-3">
-                <div className="flex items-center justify-between p-3 rounded-xl bg-[#FDFBF5]">
-                  <div className="flex items-center gap-2 text-sm text-[#1A1A1A]/60">
-                    <CheckCircle className="w-4 h-4 text-green-500" />
-                    {isRTL ? 'الدروس المكتملة' : 'Completed'}
-                  </div>
-                  <span className="font-mono-tech font-bold text-[#1A1A1A]">
-                    {Math.floor((progress / 100) * (selectedCourse?.curriculum.length || 0))}/
-                    {selectedCourse?.curriculum.length}
-                  </span>
+              {/* Right — Overall Progress Ring */}
+              <div className="flex flex-col items-center gap-4">
+                <div className="relative">
+                  <ProgressRing progress={demoTotalProgress} />
                 </div>
-                <div className="flex items-center justify-between p-3 rounded-xl bg-[#FDFBF5]">
-                  <div className="flex items-center gap-2 text-sm text-[#1A1A1A]/60">
-                    <Clock className="w-4 h-4 text-[#006D77]" />
-                    {isRTL ? 'الوقت المستغرق' : 'Time Spent'}
-                  </div>
-                  <span className="font-mono-tech font-bold text-[#1A1A1A]">
-                    {Math.floor((progress / 100) * (selectedCourse?.hours || 0))}h
-                  </span>
-                </div>
-                <div className="flex items-center justify-between p-3 rounded-xl bg-[#FDFBF5]">
-                  <div className="flex items-center gap-2 text-sm text-[#1A1A1A]/60">
-                    <Award className="w-4 h-4 text-[#E9C46A]" />
-                    {isRTL ? 'الشهادة' : 'Certificate'}
-                  </div>
-                  <span className="text-xs font-medium text-[#1A1A1A]/40">
-                    {progress >= 100
-                      ? isRTL
-                        ? 'مكتملة'
-                        : 'Completed'
-                      : isRTL
-                      ? 'قيد التقدم'
-                      : 'In Progress'}
-                  </span>
+
+                {/* Course Mini Progress Bars */}
+                <div className="w-full max-w-[200px] space-y-2">
+                  {courseProgressList.map((c, idx) => (
+                    <div key={idx} className="group">
+                      <div className="flex items-center justify-between text-[11px] mb-0.5">
+                        <span className="text-[#1A1A1A]/60 truncate">{c.name}</span>
+                        <span className="font-mono-tech text-[#006D77]">{c.progress}%</span>
+                      </div>
+                      <div className="h-1 bg-[#E5E5E5] rounded-full overflow-hidden">
+                        <div
+                          className="h-full bg-[#006D77] rounded-full"
+                          style={{
+                            width: `${c.progress}%`,
+                            transition: 'width 1s ease-out',
+                            transitionDelay: `${0.3 + idx * 0.15}s`,
+                          }}
+                        />
+                      </div>
+                    </div>
+                  ))}
                 </div>
               </div>
             </div>
+          </div>
+        </section>
 
-            {/* Quick Actions */}
-            <div className="bg-white rounded-2xl border border-[#E5E5E5] p-4 mt-4">
-              <h3 className="font-semibold text-sm text-[#1A1A1A] mb-3">
-                {isRTL ? 'إجراءات سريعة' : 'Quick Actions'}
-              </h3>
-              <Link
-                to="/courses"
-                className="flex items-center gap-3 p-3 rounded-xl hover:bg-[#FDFBF5] transition-colors text-sm text-[#1A1A1A]/70"
-              >
-                <BookOpen className="w-4 h-4 text-[#006D77]" />
-                {t('courses.viewAll')}
-                <ChevronRight className="w-4 h-4 ms-auto" />
-              </Link>
+        {/* ============================================ */}
+        {/*  SECTION: Skill Breakdown + Roadmap          */}
+        {/* ============================================ */}
+        <section
+          className={`grid grid-cols-1 lg:grid-cols-5 gap-6 mb-8 transition-all duration-500 delay-150 ${mounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}
+        >
+          {/* Left — Skill Breakdown (2/5) */}
+          <div className="lg:col-span-2">
+            <div className="bg-white rounded-2xl border border-[#E5E5E5] p-6 shadow-sm hover:shadow-md transition-shadow">
+              <div className="flex items-center gap-2 mb-1">
+                <BarChart3 className="w-5 h-5 text-[#006D77]" />
+                <h2 className="text-lg font-semibold text-[#1A1A1A]">تحليل المهارات</h2>
+              </div>
+              <p className="text-xs text-[#1A1A1A]/50 mb-4">
+                تقدمك في مجالات الأتمتة المختلفة
+              </p>
+
+              {/* Radar Chart */}
+              <RadarChart skills={DEMO_SKILLS} />
+
+              {/* Skill Bars */}
+              <div className="mt-5 space-y-3">
+                {DEMO_SKILLS.map((skill, idx) => (
+                  <div key={idx} className="group">
+                    <div className="flex items-center justify-between text-xs mb-1">
+                      <span className="text-[#1A1A1A]/70">{skill.name}</span>
+                      <span className="font-mono-tech text-[#006D77]">{skill.value}%</span>
+                    </div>
+                    <div className="h-1.5 bg-[#E5E5E5] rounded-full overflow-hidden">
+                      <div
+                        className="h-full bg-[#006D77] rounded-full"
+                        style={{
+                          width: `${skill.value}%`,
+                          transition: 'width 0.8s ease-out',
+                          transitionDelay: `${0.5 + idx * 0.1}s`,
+                        }}
+                      />
+                    </div>
+                  </div>
+                ))}
+              </div>
             </div>
           </div>
-        </div>
+
+          {/* Right — Learning Roadmap (3/5) */}
+          <div className="lg:col-span-3">
+            <div className="bg-white rounded-2xl border border-[#E5E5E5] p-6 shadow-sm hover:shadow-md transition-shadow">
+              <div className="flex items-center gap-2 mb-1">
+                <Map className="w-5 h-5 text-[#006D77]" />
+                <h2 className="text-lg font-semibold text-[#1A1A1A]">خارطة التعلم</h2>
+              </div>
+              <p className="text-xs text-[#1A1A1A]/50 mb-5">
+                مراحل رحلتك التعليمية في عالم الأتمتة
+              </p>
+
+              <div className="space-y-1 pr-2">
+                {DEMO_ROADMAP.map((stage, idx) => (
+                  <RoadmapStageCard
+                    key={stage.id}
+                    stage={stage}
+                    index={idx}
+                    isLast={idx === DEMO_ROADMAP.length - 1}
+                  />
+                ))}
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* ============================================ */}
+        {/*  SECTION: Activity + Quick Actions           */}
+        {/* ============================================ */}
+        <section
+          className={`grid grid-cols-1 lg:grid-cols-5 gap-6 transition-all duration-500 delay-300 ${mounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}
+        >
+          {/* Left — Activity Timeline (3/5) */}
+          <div className="lg:col-span-3">
+            <div className="bg-white rounded-2xl border border-[#E5E5E5] p-6 shadow-sm hover:shadow-md transition-shadow">
+              <div className="flex items-center gap-2 mb-5">
+                <Clock className="w-5 h-5 text-[#006D77]" />
+                <h2 className="text-lg font-semibold text-[#1A1A1A]">آخر النشاطات</h2>
+              </div>
+
+              <div className="relative pr-4">
+                {/* Timeline line */}
+                <div className="absolute right-[7px] top-2 bottom-2 w-0.5 bg-[#E5E5E5]" />
+
+                <div className="space-y-5">
+                  {DEMO_ACTIVITIES.map((activity, idx) => (
+                    <div
+                      key={activity.id}
+                      className="relative flex gap-3 items-start"
+                      style={{
+                        animationDelay: `${idx * 100}ms`,
+                      }}
+                    >
+                      {/* Dot */}
+                      <div
+                        className="relative z-10 w-4 h-4 rounded-full mt-1 shrink-0 border-2 border-white shadow-sm"
+                        style={{ backgroundColor: activity.color }}
+                      />
+                      {/* Content */}
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm text-[#1A1A1A] leading-relaxed">
+                          {activity.text}
+                        </p>
+                        <span className="text-[11px] text-[#1A1A1A]/40">{activity.time}</span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Right — Quick Actions (2/5) */}
+          <div className="lg:col-span-2">
+            <div className="bg-white rounded-2xl border border-[#E5E5E5] p-6 shadow-sm hover:shadow-md transition-shadow">
+              <div className="flex items-center gap-2 mb-5">
+                <Zap className="w-5 h-5 text-[#006D77]" />
+                <h2 className="text-lg font-semibold text-[#1A1A1A]">إجراءات سريعة</h2>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                {[
+                  { icon: BookOpen, label: 'استكشف الدورات', href: '/courses', color: '#006D77' },
+                  { icon: Cpu, label: 'المحاكي التفاعلي', href: '#', color: '#006D77' },
+                  { icon: Award, label: 'اختبر نفسك', href: '#', color: '#B8860B' },
+                  { icon: MessageCircle, label: 'تواصل مع المدربين', href: '#', color: '#006D77' },
+                ].map((action, idx) => (
+                  <Link
+                    key={idx}
+                    to={action.href}
+                    className="flex flex-col items-center gap-2 p-4 rounded-xl border border-[#E5E5E5] bg-[#FDFBF5] hover:bg-[#006D77]/5 hover:-translate-y-0.5 active:scale-[0.97] transition-all duration-200"
+                  >
+                    <action.icon className="w-6 h-6" style={{ color: action.color }} />
+                    <span className="text-xs text-[#1A1A1A]/70 text-center leading-tight">
+                      {action.label}
+                    </span>
+                  </Link>
+                ))}
+              </div>
+            </div>
+          </div>
+        </section>
       </div>
     </div>
   );
