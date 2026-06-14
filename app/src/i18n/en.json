@@ -1,0 +1,212 @@
+{
+  "nav": {
+    "home": "Home",
+    "courses": "Courses",
+    "about": "About",
+    "login": "Login",
+    "register": "Get Started",
+    "dashboard": "Dashboard",
+    "logout": "Logout",
+    "contact": "Contact Us"
+  },
+  "hero": {
+    "badge": "Interactive Learning Platform",
+    "title": "Learn Automation",
+    "subtitle": "Like a Smart Game",
+    "description": "PLC Programming · Power Electronics · Robotics\nInteractive lessons, real simulation, and professional certificates.",
+    "cta1": "Start Free — Discover Your Level",
+    "cta2": "I have an account — Login",
+    "stats1": "SSL Encrypted",
+    "stats2": "1200+ Learners",
+    "stats3": "4.9/5"
+  },
+  "features": {
+    "title": "Features",
+    "subtitle": "Everything you need to become an automation expert",
+    "description": "A comprehensive platform combining theory and practice with interactive tools and real simulation",
+    "interactive": {
+      "title": "Interactive Lessons",
+      "desc": "Tutorial videos with interactive exercises and instant quizzes"
+    },
+    "simulation": {
+      "title": "PLC Simulation",
+      "desc": "Built-in PLC simulator to practice programming directly in your browser"
+    },
+    "xp": {
+      "title": "XP & Challenges",
+      "desc": "Earn experience points and compete with learners through daily challenges"
+    },
+    "certificates": {
+      "title": "Certified Certificates",
+      "desc": "Get completion certificates recognized in the job market"
+    },
+    "projects": {
+      "title": "Practical Projects",
+      "desc": "Apply what you learn on real industry projects"
+    },
+    "community": {
+      "title": "Arab Community",
+      "desc": "Connect with learners and experts from the Arab world"
+    }
+  },
+  "courses": {
+    "title": "Courses",
+    "subtitle": "Start Your Learning Journey",
+    "viewAll": "View All Courses",
+    "levels": {
+      "beginner": "Beginner",
+      "intermediate": "Intermediate",
+      "advanced": "Advanced"
+    },
+    "lessons": "lessons",
+    "hours": "hours",
+    "enroll": "Enroll Now",
+    "catalog": {
+      "title": "All Courses",
+      "filterAll": "All",
+      "filterBeginner": "Beginner",
+      "filterIntermediate": "Intermediate",
+      "filterAdvanced": "Advanced"
+    },
+    "detail": {
+      "overview": "Overview",
+      "curriculum": "Curriculum",
+      "instructor": "Instructor",
+      "price": "Price",
+      "buyNow": "Buy Now",
+      "lessonsCount": "Lessons",
+      "duration": "Duration",
+      "level": "Level",
+      "certificate": "Certificate",
+      "access": "Lifetime Access",
+      "included": "What's Included"
+    }
+  },
+  "courseData": {
+    "plc": {
+      "title": "PLC Programming for Beginners",
+      "description": "Learn the basics of Programmable Logic Controller (PLC) programming from scratch. This course covers fundamental concepts, Ladder Logic programming language, and practical applications.",
+      "fullDesc": "This comprehensive course qualifies you to understand and program PLC systems widely used in industry. You will learn through theoretical lessons, practical exercises, and interactive simulation."
+    },
+    "power": {
+      "title": "Power Electronics",
+      "description": "Explore the world of power electronics from transformers and converters to motor control systems. A comprehensive course for engineers and technicians.",
+      "fullDesc": "An in-depth course in power electronics covering transformers, rectifiers, inverters, and speed control systems. Suitable for electrical engineers and technicians."
+    },
+    "robotics": {
+      "title": "Robotics & ARM",
+      "description": "Enter the world of advanced robotics and learn robot arm programming and ARM processors. An advanced course for mechanical engineers.",
+      "fullDesc": "An advanced course in robotics and ARM processors. You will learn robot mechanics, sensors, motors, and industrial arm programming."
+    }
+  },
+  "stats": {
+    "title": "Statistics",
+    "learners": "Active Learners",
+    "courses": "Courses",
+    "simulations": "Interactive Simulations",
+    "rating": "Learner Rating"
+  },
+  "cta": {
+    "title": "Start Your Journey in Automation Today",
+    "subtitle": "Join thousands of learners and gain the skills needed for the industrial automation job market",
+    "register": "Register for Free",
+    "login": "Login"
+  },
+  "auth": {
+    "login": "Login",
+    "register": "Create Account",
+    "email": "Email Address",
+    "password": "Password",
+    "confirmPassword": "Confirm Password",
+    "fullName": "Full Name",
+    "loginBtn": "Login",
+    "registerBtn": "Create Account",
+    "noAccount": "Don't have an account?",
+    "hasAccount": "Already have an account?",
+    "createOne": "Sign Up",
+    "loginNow": "Login",
+    "or": "or",
+    "guest": "Continue as Guest",
+    "errors": {
+      "emailRequired": "Email is required",
+      "passwordRequired": "Password is required",
+      "passwordShort": "Password must be at least 6 characters",
+      "passwordMatch": "Passwords do not match",
+      "nameRequired": "Name is required",
+      "invalidEmail": "Invalid email address"
+    }
+  },
+  "payment": {
+    "title": "Complete Purchase",
+    "cardNumber": "Card Number",
+    "cardHolder": "Cardholder Name",
+    "expiry": "Expiry Date",
+    "cvv": "CVV",
+    "payNow": "Pay Now",
+    "total": "Total",
+    "secure": "🔒 Secure encrypted payment",
+    "errors": {
+      "cardRequired": "Card number is required",
+      "cardInvalid": "Invalid card number",
+      "holderRequired": "Cardholder name is required",
+      "expiryRequired": "Expiry date is required",
+      "cvvRequired": "CVV is required"
+    }
+  },
+  "dashboard": {
+    "welcome": "Welcome",
+    "xp": "XP Points",
+    "myCourses": "My Courses",
+    "progress": "Progress",
+    "completed": "Completed",
+    "continue": "Continue",
+    "start": "Start",
+    "lessons": "Lessons",
+    "resources": "Resources",
+    "quiz": "Quiz",
+    "simulator": "Simulator",
+    "noCourses": "You haven't purchased any courses yet. Browse courses and start your learning journey!"
+  },
+  "footer": {
+    "about": "About",
+    "courses": "Courses",
+    "resources": "Resources",
+    "support": "Support",
+    "terms": "Terms of Use",
+    "privacy": "Privacy Policy",
+    "contact": "Contact Us",
+    "faq": "FAQ",
+    "blog": "Blog",
+    "rights": "Interactive educational platform for learning industrial automation © 2026"
+  },
+  "about": {
+    "title": "About",
+    "subtitle": "We believe in the power of interactive learning",
+    "desc1": "Circuitry & Code is a leading educational platform specializing in industrial automation and PLC control. We aim to provide learners in the Arab world with the practical skills they need to succeed in the job market.",
+    "desc2": "Our platform combines high-quality theoretical content with interactive tools such as the built-in PLC simulator, allowing you to practice practical skills directly from your browser.",
+    "team": "Our Team",
+    "mission": "Our Mission",
+    "missionText": "Empowering every engineer and technician in the Arab world to access high-quality education in industrial automation."
+  },
+  "contact": {
+    "title": "Contact Us",
+    "subtitle": "We're here to help. Reach out to us for any inquiry",
+    "name": "Name",
+    "email": "Email",
+    "message": "Message",
+    "send": "Send",
+    "success": "Your message has been sent successfully!",
+    "info": "Contact Information"
+  },
+  "privacy": {
+    "title": "Privacy Policy",
+    "lastUpdated": "Last Updated: January 2026",
+    "intro": "We take your privacy seriously. This policy explains how we collect, use, and protect your personal information.",
+    "collection": "Information Collection",
+    "collectionText": "We collect information you provide when registering, purchasing, or contacting us.",
+    "usage": "Information Usage",
+    "usageText": "We use your information to provide our services, improve your experience, and communicate with you.",
+    "security": "Security",
+    "securityText": "We use advanced security measures to protect your personal information."
+  }
+}
