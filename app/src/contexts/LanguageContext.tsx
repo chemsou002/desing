@@ -7,6 +7,8 @@ interface LanguageContextType {
   setLanguage: (lang: string) => void;
 }
 
+const LANGUAGE_STORAGE_KEY = 'electrohub_language';
+
 const LanguageContext = createContext<LanguageContextType>({
   currentLang: 'ar',
   direction: 'rtl',
@@ -14,7 +16,10 @@ const LanguageContext = createContext<LanguageContextType>({
 });
 
 export const LanguageProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [currentLang, setCurrentLang] = useState(i18n.language || 'ar');
+  const [currentLang, setCurrentLang] = useState(() => {
+    const stored = localStorage.getItem(LANGUAGE_STORAGE_KEY);
+    return stored || i18n.language || 'ar';
+  });
   const direction = currentLang === 'ar' ? 'rtl' : 'ltr';
 
   useEffect(() => {
@@ -25,6 +30,9 @@ export const LanguageProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   const setLanguage = useCallback((lang: string) => {
     i18n.changeLanguage(lang);
     setCurrentLang(lang);
+    localStorage.setItem(LANGUAGE_STORAGE_KEY, lang);
+    document.documentElement.dir = lang === 'ar' ? 'rtl' : 'ltr';
+    document.documentElement.lang = lang;
   }, []);
 
   return (

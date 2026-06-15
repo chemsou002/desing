@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Link } from 'react-router-dom';
+import { Link } from 'react-router';
 import { useTranslation } from 'react-i18next';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { courses } from '@/data/courses';
@@ -147,20 +147,13 @@ const Home: React.FC = () => {
   ];
 
   const displayedCourses = courses.slice(0, 3);
-
   const ArrowIcon = isRTL ? ArrowLeft : ArrowRight;
 
   return (
     <div dir={direction}>
       {/* ─── Hero Section ─── */}
       <section className="relative min-h-screen pt-24 pb-16 overflow-hidden bg-[#FDFBF5]">
-        {/* Background Image */}
         <div className="absolute inset-0">
-          <img
-            src="/hero-bg.jpg"
-            alt=""
-            className="w-full h-full object-cover opacity-30"
-          />
           <div className="absolute inset-0 bg-gradient-to-b from-[#FDFBF5]/80 via-transparent to-[#FDFBF5]" />
         </div>
 
@@ -185,14 +178,14 @@ const Home: React.FC = () => {
 
               <div className="flex flex-col sm:flex-row gap-3 justify-center lg:justify-start mb-8">
                 <Link
-                  to="/auth?mode=register"
+                  to="/login"
                   className="shimmer-btn inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl text-white font-semibold text-sm"
                 >
                   <PlayCircle className="w-4 h-4" />
                   {t('hero.cta1')}
                 </Link>
                 <Link
-                  to="/auth"
+                  to="/login"
                   className="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl border-2 border-[#E5E5E5] text-[#1A1A1A] font-semibold text-sm hover:border-[#006D77] hover:text-[#006D77] transition-colors"
                 >
                   <ArrowIcon className="w-4 h-4" />
@@ -200,7 +193,6 @@ const Home: React.FC = () => {
                 </Link>
               </div>
 
-              {/* Hero Stats */}
               <div className="flex items-center gap-6 justify-center lg:justify-start text-sm text-[#1A1A1A]/50">
                 <div className="flex items-center gap-1.5">
                   <Shield className="w-4 h-4 text-[#006D77]" />
@@ -353,12 +345,10 @@ const Home: React.FC = () => {
                 to={`/courses/${course.id}`}
                 className="group bg-white rounded-2xl overflow-hidden border border-[#E5E5E5] hover:shadow-xl hover:border-[#006D77]/20 transition-all duration-300"
               >
-                <div className="relative h-48 overflow-hidden">
-                  <img
-                    src={course.image}
-                    alt={course.title[currentLang as 'ar' | 'en']}
-                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                  />
+                <div className="relative h-48 overflow-hidden bg-gradient-to-br from-[#006D77]/10 to-[#006D77]/5">
+                  <div className="absolute inset-0 flex items-center justify-center">
+                    <BookOpen className="w-16 h-16 text-[#006D77]/20" />
+                  </div>
                   <div className="absolute top-3 right-3">
                     <span
                       className={`px-3 py-1 rounded-full text-xs font-semibold ${
@@ -438,13 +428,13 @@ const Home: React.FC = () => {
           </p>
           <div className="flex flex-col sm:flex-row gap-3 justify-center">
             <Link
-              to="/auth?mode=register"
+              to="/login"
               className="shimmer-btn inline-flex items-center justify-center gap-2 px-8 py-3 rounded-xl text-white font-semibold"
             >
               {t('cta.register')}
             </Link>
             <Link
-              to="/auth"
+              to="/login"
               className="inline-flex items-center justify-center gap-2 px-8 py-3 rounded-xl border-2 border-white/20 text-white font-semibold hover:bg-white/10 transition-colors"
             >
               {t('cta.login')}

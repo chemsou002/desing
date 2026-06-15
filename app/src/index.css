@@ -89,6 +89,11 @@
   text-align: right;
 }
 
+[dir="ltr"] {
+  direction: ltr;
+  text-align: left;
+}
+
 /* Custom scrollbar */
 ::-webkit-scrollbar {
   width: 6px;
@@ -105,4 +110,34 @@
 
 ::-webkit-scrollbar-thumb:hover {
   background: #006D77;
+}
+
+/* Shimmer button effect */
+.shimmer-btn {
+  background: linear-gradient(90deg, #006D77 0%, #008891 50%, #006D77 100%);
+  background-size: 200% auto;
+  animation: shimmer 3s linear infinite;
+  transition: all 0.3s ease;
+}
+
+.shimmer-btn:hover {
+  background-size: 250% auto;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 109, 119, 0.3);
+}
+
+@keyframes shimmer {
+  0% { background-position: 200% center; }
+  100% { background-position: -200% center; }
+}
+
+/* Smooth scroll */
+html {
+  scroll-behavior: smooth;
+}
+
+/* Selection color */
+::selection {
+  background: rgba(0, 109, 119, 0.2);
+  color: #1A1A1A;
 }

@@ -1,13 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation } from 'react-router';
 import { useTranslation } from 'react-i18next';
-import { useAuth } from '@/contexts/AuthContext';
 import { useLanguage } from '@/contexts/LanguageContext';
 import {
   Menu,
   X,
   Globe,
-  LogOut,
   LayoutDashboard,
   BookOpen,
   Home,
@@ -17,7 +15,6 @@ import {
 
 const Navbar: React.FC = () => {
   const { t } = useTranslation();
-  const { user, isAuthenticated, logout } = useAuth();
   const { currentLang, setLanguage, direction } = useLanguage();
   const location = useLocation();
   const [scrolled, setScrolled] = useState(false);
@@ -98,44 +95,22 @@ const Navbar: React.FC = () => {
               <span className="hidden sm:inline">{currentLang === 'ar' ? 'EN' : 'عربي'}</span>
             </button>
 
-            {/* Auth Buttons */}
-            {isAuthenticated ? (
-              <div className="hidden md:flex items-center gap-2">
-                <Link
-                  to="/dashboard"
-                  className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium text-[#006D77] hover:bg-[#006D77]/10 transition-colors"
-                >
-                  <LayoutDashboard className="w-4 h-4" />
-                  <span>{t('nav.dashboard')}</span>
-                </Link>
-                <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-[#E9C46A]/20">
-                  <span className="text-sm font-mono-tech font-semibold text-[#B8860B]">
-                    {user?.xp || 0} XP
-                  </span>
-                </div>
-                <button
-                  onClick={logout}
-                  className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium text-red-600 hover:bg-red-50 transition-colors"
-                >
-                  <LogOut className="w-4 h-4" />
-                </button>
-              </div>
-            ) : (
-              <div className="hidden md:flex items-center gap-2">
-                <Link
-                  to="/auth"
-                  className="px-4 py-2 rounded-lg text-sm font-medium text-[#1A1A1A]/70 hover:text-[#006D77] transition-colors"
-                >
-                  {t('nav.login')}
-                </Link>
-                <Link
-                  to="/auth?mode=register"
-                  className="shimmer-btn px-4 py-2 rounded-lg text-sm font-medium text-white"
-                >
-                  {t('nav.register')}
-                </Link>
-              </div>
-            )}
+            {/* Dashboard Link */}
+            <Link
+              to="/dashboard"
+              className="hidden md:flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium text-[#006D77] hover:bg-[#006D77]/10 transition-colors"
+            >
+              <LayoutDashboard className="w-4 h-4" />
+              <span>{t('nav.dashboard')}</span>
+            </Link>
+
+            {/* Login Link */}
+            <Link
+              to="/login"
+              className="hidden md:flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-medium text-white bg-[#006D77] hover:bg-[#005a63] transition-colors"
+            >
+              {t('nav.login')}
+            </Link>
 
             {/* Mobile Menu Toggle */}
             <button
@@ -167,39 +142,19 @@ const Navbar: React.FC = () => {
               </Link>
             ))}
             <div className="border-t border-[#E5E5E5] pt-2 mt-2">
-              {isAuthenticated ? (
-                <>
-                  <Link
-                    to="/dashboard"
-                    className="flex items-center gap-2 px-3 py-2.5 rounded-lg text-sm font-medium text-[#006D77] hover:bg-[#006D77]/10"
-                  >
-                    <LayoutDashboard className="w-4 h-4" />
-                    {t('nav.dashboard')}
-                  </Link>
-                  <button
-                    onClick={logout}
-                    className="flex items-center gap-2 px-3 py-2.5 rounded-lg text-sm font-medium text-red-600 hover:bg-red-50 w-full"
-                  >
-                    <LogOut className="w-4 h-4" />
-                    {t('nav.logout')}
-                  </button>
-                </>
-              ) : (
-                <div className="flex flex-col gap-2">
-                  <Link
-                    to="/auth"
-                    className="px-3 py-2.5 rounded-lg text-sm font-medium text-[#1A1A1A]/70 hover:text-[#006D77] text-center"
-                  >
-                    {t('nav.login')}
-                  </Link>
-                  <Link
-                    to="/auth?mode=register"
-                    className="shimmer-btn px-3 py-2.5 rounded-lg text-sm font-medium text-white text-center"
-                  >
-                    {t('nav.register')}
-                  </Link>
-                </div>
-              )}
+              <Link
+                to="/dashboard"
+                className="flex items-center gap-2 px-3 py-2.5 rounded-lg text-sm font-medium text-[#006D77] hover:bg-[#006D77]/10"
+              >
+                <LayoutDashboard className="w-4 h-4" />
+                {t('nav.dashboard')}
+              </Link>
+              <Link
+                to="/login"
+                className="flex items-center gap-2 px-3 py-2.5 rounded-lg text-sm font-medium text-white bg-[#006D77] hover:bg-[#005a63] mt-1"
+              >
+                {t('nav.login')}
+              </Link>
             </div>
           </div>
         </div>

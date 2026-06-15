@@ -1,16 +1,17 @@
-import { StrictMode } from "react";
-import { createRoot } from "react-dom/client";
-import { BrowserRouter } from "react-router";
-import { TRPCProvider } from "@/providers/trpc";
-import "./index.css";
-import App from "./App";
+import { StrictMode } from 'react'
+import { createRoot } from 'react-dom/client'
+import { BrowserRouter } from 'react-router'
+import { LanguageProvider } from './contexts/LanguageContext'
+import './i18n'
+import './index.css'
+import App from './App'
 
-createRoot(document.getElementById("root")!).render(
+createRoot(document.getElementById('root')!).render(
   <StrictMode>
-    <TRPCProvider>
-      <BrowserRouter>
+    <BrowserRouter>
+      <LanguageProvider>
         <App />
-      </BrowserRouter>
-    </TRPCProvider>
-  </StrictMode>
-);
+      </LanguageProvider>
+    </BrowserRouter>
+  </StrictMode>,
+)
