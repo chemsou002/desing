@@ -24,14 +24,14 @@ export default function NotFound() {
           <CardTitle className="text-5xl font-bold text-[#1A1A1A]">404</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          <p className="text-[#1A1A1A]/50">{t('notFound.message')}</p>
+          <p className="text-[#1A1A1A]/50">{t('notFound.message', 'Page not found')}</p>
           <Button 
             asChild 
             className="w-full bg-[#006D77] hover:bg-[#005a63]"
           >
             <Link to="/" className="flex items-center justify-center gap-2">
               <Home className="w-4 h-4" />
-              {t('notFound.backHome')}
+              {t('notFound.backHome', 'Back to Home')}
             </Link>
           </Button>
         </CardContent>

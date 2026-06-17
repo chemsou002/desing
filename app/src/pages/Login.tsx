@@ -1,12 +1,108 @@
+import { useEffect, useRef } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useTranslation } from "react-i18next";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { LogIn, Globe } from "lucide-react";
 
+function getOAuthUrl() {
+  const kimiAuthUrl = import.meta.env.VITE_KIMI_AUTH_URL;
+  const appID = import.meta.env.VITE_APP_ID;
+  const redirectUri = `${window.location.origin}/api/oauth/callback`;
+  const state = btoa(redirectUri);
+
+  const url = new URL(`${kimiAuthUrl}/api/oauth/authorize`);
+  url.searchParams.set("client_id", appID);
+  url.searchParams.set("redirect_uri", redirectUri);
+  url.searchParams.set("response_type", "code");
+  url.searchParams.set("scope", "profile");
+  url.searchParams.set("state", state);
+
+  return url.toString();
+}
+
+declare global {
+  interface Window {
+    google?: {
+      accounts: {
+        id: {
+          initialize: (config: Record<string, unknown>) => void;
+          renderButton: (element: HTMLElement, config: Record<string, unknown>) => void;
+        };
+      };
+    };
+  }
+}
+
 export default function Login() {
   const { t } = useTranslation();
   const { direction, currentLang, setLanguage } = useLanguage();
+  const googleButtonRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    // Load Google Identity Services script
+    const existingScript = document.getElementById("google-oauth-script");
+    if (!existingScript) {
+      const script = document.createElement("script");
+      script.id = "google-oauth-script";
+      script.src = "https://accounts.google.com/gsi/client";
+      script.async = true;
+      script.defer = true;
+      document.body.appendChild(script);
+
+      script.onload = () => {
+        if (window.google && googleButtonRef.current) {
+          window.google.accounts.id.initialize({
+            client_id: import.meta.env.VITE_GOOGLE_CLIENT_ID || "",
+            callback: handleGoogleResponse,
+          });
+          window.google.accounts.id.renderButton(googleButtonRef.current, {
+            theme: "outline",
+            size: "large",
+            width: "100%",
+            text: "signin_with",
+            shape: "pill",
+          });
+        }
+      };
+    } else {
+      // Script already loaded
+      if (window.google && googleButtonRef.current) {
+        window.google.accounts.id.initialize({
+          client_id: import.meta.env.VITE_GOOGLE_CLIENT_ID || "",
+          callback: handleGoogleResponse,
+        });
+        window.google.accounts.id.renderButton(googleButtonRef.current, {
+          theme: "outline",
+          size: "large",
+          width: "100%",
+          text: "signin_with",
+          shape: "pill",
+        });
+      }
+    }
+  }, []);
+
+  async function handleGoogleResponse(response: { credential: string }) {
+    try {
+      const res = await fetch("/api/auth/google", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ idToken: response.credential }),
+      });
+
+      if (res.ok) {
+        window.location.href = "/dashboard";
+      } else {
+        const error = await res.json();
+        console.error("Google auth failed:", error);
+        alert(t('loginPage.googleAuthFailed') || "Google authentication failed. Please try again.");
+      }
+    } catch (error) {
+      console.error("Google auth error:", error);
+      alert(t('loginPage.googleAuthError') || "An error occurred. Please try again.");
+    }
+  }
 
   return (
     <div 
@@ -47,11 +143,26 @@ export default function Login() {
             </p>
           </CardHeader>
           <CardContent className="space-y-4">
+            {/* Google OAuth Button */}
+            <div ref={googleButtonRef} className="w-full flex justify-center" />
+
+            <div className="relative">
+              <div className="absolute inset-0 flex items-center">
+                <span className="w-full border-t border-[#E5E5E5]" />
+              </div>
+              <div className="relative flex justify-center text-xs uppercase">
+                <span className="bg-white px-2 text-[#1A1A1A]/40">
+                  {t('loginPage.or')}
+                </span>
+              </div>
+            </div>
+
+            {/* Kimi OAuth Button */}
             <Button
               className="w-full bg-[#006D77] hover:bg-[#005a63] text-white shadow-md hover:shadow-lg transition-all"
               size="lg"
               onClick={() => {
-                window.location.href = "/dashboard";
+                window.location.href = getOAuthUrl();
               }}
             >
               <LogIn className="w-4 h-4 mr-2" />

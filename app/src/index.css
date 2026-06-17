@@ -94,6 +94,24 @@
   text-align: left;
 }
 
+/* RTL/LTR specific adjustments */
+[dir="rtl"] .space-x-reverse > * + * {
+  --tw-space-x-reverse: 1;
+}
+
+[dir="ltr"] .space-x-reverse > * + * {
+  --tw-space-x-reverse: 0;
+}
+
+/* Fix flex direction for RTL */
+[dir="rtl"] .flex-row-rtl {
+  flex-direction: row-reverse;
+}
+
+[dir="ltr"] .flex-row-rtl {
+  flex-direction: row;
+}
+
 /* Custom scrollbar */
 ::-webkit-scrollbar {
   width: 6px;
@@ -129,6 +147,73 @@
 @keyframes shimmer {
   0% { background-position: 200% center; }
   100% { background-position: -200% center; }
+}
+
+/* Smooth page transitions */
+.page-transition-enter {
+  opacity: 0;
+  transform: translateY(10px);
+}
+
+.page-transition-enter-active {
+  opacity: 1;
+  transform: translateY(0);
+  transition: opacity 0.3s ease, transform 0.3s ease;
+}
+
+/* Card hover effects */
+.card-hover {
+  transition: all 0.3s ease;
+}
+
+.card-hover:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.08);
+}
+
+/* Glass morphism effect */
+.glass {
+  background: rgba(255, 255, 255, 0.8);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+
+/* Text gradient */
+.text-gradient {
+  background: linear-gradient(135deg, #006D77 0%, #00B4D8 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* Pulse animation for live indicator */
+@keyframes pulse-dot {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
+.pulse-dot {
+  animation: pulse-dot 2s ease-in-out infinite;
+}
+
+/* Loading skeleton */
+.skeleton {
+  background: linear-gradient(90deg, #E5E5E5 25%, #F0F0F0 50%, #E5E5E5 75%);
+  background-size: 200% 100%;
+  animation: skeleton-loading 1.5s ease-in-out infinite;
+}
+
+@keyframes skeleton-loading {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+/* Focus styles */
+button:focus-visible,
+a:focus-visible,
+input:focus-visible {
+  outline: 2px solid #006D77;
+  outline-offset: 2px;
 }
 
 /* Smooth scroll */

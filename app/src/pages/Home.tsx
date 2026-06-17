@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Link } from 'react-router';
+import { Link, useNavigate } from 'react-router';
 import { useTranslation } from 'react-i18next';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { useAuth } from '@/contexts/AuthContext';
 import { courses } from '@/data/courses';
 import {
   PlayCircle,
@@ -101,6 +102,98 @@ const SlotCounter: React.FC<{ value: number; suffix?: string; duration?: number 
   );
 };
 
+/* ─── CTA Buttons with Auth Check ─── */
+const HeroCTAButtons: React.FC = () => {
+  const { t } = useTranslation();
+  const { isAuthenticated } = useAuth();
+  const { direction } = useLanguage();
+  const navigate = useNavigate();
+  const isRTL = direction === 'rtl';
+
+  const ArrowIcon = isRTL ? ArrowLeft : ArrowRight;
+
+  if (isAuthenticated) {
+    return (
+      <div className="flex flex-col sm:flex-row gap-3 justify-center lg:justify-start mb-8">
+        <Link
+          to="/dashboard"
+          className="shimmer-btn inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl text-white font-semibold text-sm"
+        >
+          <PlayCircle className="w-4 h-4" />
+          {t('hero.cta1')}
+        </Link>
+        <Link
+          to="/dashboard"
+          className="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl border-2 border-[#E5E5E5] text-[#1A1A1A] font-semibold text-sm hover:border-[#006D77] hover:text-[#006D77] transition-colors"
+        >
+          <ArrowIcon className="w-4 h-4" />
+          {t('hero.cta2')}
+        </Link>
+      </div>
+    );
+  }
+
+  return (
+    <div className="flex flex-col sm:flex-row gap-3 justify-center lg:justify-start mb-8">
+      <Link
+        to="/login"
+        className="shimmer-btn inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl text-white font-semibold text-sm"
+      >
+        <PlayCircle className="w-4 h-4" />
+        {t('hero.cta1')}
+      </Link>
+      <Link
+        to="/login"
+        className="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl border-2 border-[#E5E5E5] text-[#1A1A1A] font-semibold text-sm hover:border-[#006D77] hover:text-[#006D77] transition-colors"
+      >
+        <ArrowIcon className="w-4 h-4" />
+        {t('hero.cta2')}
+      </Link>
+    </div>
+  );
+};
+
+const CTAButtons: React.FC = () => {
+  const { t } = useTranslation();
+  const { isAuthenticated } = useAuth();
+
+  if (isAuthenticated) {
+    return (
+      <div className="flex flex-col sm:flex-row gap-3 justify-center">
+        <Link
+          to="/dashboard"
+          className="shimmer-btn inline-flex items-center justify-center gap-2 px-8 py-3 rounded-xl text-white font-semibold"
+        >
+          {t('cta.dashboard') || t('cta.register')}
+        </Link>
+        <Link
+          to="/dashboard"
+          className="inline-flex items-center justify-center gap-2 px-8 py-3 rounded-xl border-2 border-white/20 text-white font-semibold hover:bg-white/10 transition-colors"
+        >
+          {t('cta.myDashboard') || t('cta.login')}
+        </Link>
+      </div>
+    );
+  }
+
+  return (
+    <div className="flex flex-col sm:flex-row gap-3 justify-center">
+      <Link
+        to="/login"
+        className="shimmer-btn inline-flex items-center justify-center gap-2 px-8 py-3 rounded-xl text-white font-semibold"
+      >
+        {t('cta.register')}
+      </Link>
+      <Link
+        to="/login"
+        className="inline-flex items-center justify-center gap-2 px-8 py-3 rounded-xl border-2 border-white/20 text-white font-semibold hover:bg-white/10 transition-colors"
+      >
+        {t('cta.login')}
+      </Link>
+    </div>
+  );
+};
+
 /* ─── Home Page ─── */
 const Home: React.FC = () => {
   const { t } = useTranslation();
@@ -147,13 +240,20 @@ const Home: React.FC = () => {
   ];
 
   const displayedCourses = courses.slice(0, 3);
+
   const ArrowIcon = isRTL ? ArrowLeft : ArrowRight;
 
   return (
     <div dir={direction}>
       {/* ─── Hero Section ─── */}
       <section className="relative min-h-screen pt-24 pb-16 overflow-hidden bg-[#FDFBF5]">
+        {/* Background Image */}
         <div className="absolute inset-0">
+          <img
+            src="/hero-bg.jpg"
+            alt=""
+            className="w-full h-full object-cover opacity-30"
+          />
           <div className="absolute inset-0 bg-gradient-to-b from-[#FDFBF5]/80 via-transparent to-[#FDFBF5]" />
         </div>
 
@@ -176,23 +276,9 @@ const Home: React.FC = () => {
                 {t('hero.description')}
               </p>
 
-              <div className="flex flex-col sm:flex-row gap-3 justify-center lg:justify-start mb-8">
-                <Link
-                  to="/login"
-                  className="shimmer-btn inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl text-white font-semibold text-sm"
-                >
-                  <PlayCircle className="w-4 h-4" />
-                  {t('hero.cta1')}
-                </Link>
-                <Link
-                  to="/login"
-                  className="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl border-2 border-[#E5E5E5] text-[#1A1A1A] font-semibold text-sm hover:border-[#006D77] hover:text-[#006D77] transition-colors"
-                >
-                  <ArrowIcon className="w-4 h-4" />
-                  {t('hero.cta2')}
-                </Link>
-              </div>
+              <HeroCTAButtons />
 
+              {/* Hero Stats */}
               <div className="flex items-center gap-6 justify-center lg:justify-start text-sm text-[#1A1A1A]/50">
                 <div className="flex items-center gap-1.5">
                   <Shield className="w-4 h-4 text-[#006D77]" />
@@ -345,10 +431,12 @@ const Home: React.FC = () => {
                 to={`/courses/${course.id}`}
                 className="group bg-white rounded-2xl overflow-hidden border border-[#E5E5E5] hover:shadow-xl hover:border-[#006D77]/20 transition-all duration-300"
               >
-                <div className="relative h-48 overflow-hidden bg-gradient-to-br from-[#006D77]/10 to-[#006D77]/5">
-                  <div className="absolute inset-0 flex items-center justify-center">
-                    <BookOpen className="w-16 h-16 text-[#006D77]/20" />
-                  </div>
+                <div className="relative h-48 overflow-hidden">
+                  <img
+                    src={course.image}
+                    alt={course.title[currentLang as 'ar' | 'en']}
+                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                  />
                   <div className="absolute top-3 right-3">
                     <span
                       className={`px-3 py-1 rounded-full text-xs font-semibold ${
@@ -426,20 +514,7 @@ const Home: React.FC = () => {
           <p className="text-white/60 mb-8 leading-relaxed">
             {t('cta.subtitle')}
           </p>
-          <div className="flex flex-col sm:flex-row gap-3 justify-center">
-            <Link
-              to="/login"
-              className="shimmer-btn inline-flex items-center justify-center gap-2 px-8 py-3 rounded-xl text-white font-semibold"
-            >
-              {t('cta.register')}
-            </Link>
-            <Link
-              to="/login"
-              className="inline-flex items-center justify-center gap-2 px-8 py-3 rounded-xl border-2 border-white/20 text-white font-semibold hover:bg-white/10 transition-colors"
-            >
-              {t('cta.login')}
-            </Link>
-          </div>
+          <CTAButtons />
         </div>
       </section>
     </div>

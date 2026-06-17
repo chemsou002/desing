@@ -114,13 +114,19 @@
     "blog": "Blog",
     "privacy": "Privacy Policy",
     "terms": "Terms of Use",
-    "rights": "All rights reserved  2025 ElectroHub"
+    "rights": "All rights reserved © 2025 ElectroHub"
   },
 
   "courseData": {
-    "plc": { "title": "PLC Programming" },
-    "power": { "title": "Power Electronics" },
-    "robotics": { "title": "Industrial Robotics" }
+    "plc": {
+      "title": "PLC Programming"
+    },
+    "power": {
+      "title": "Power Electronics"
+    },
+    "robotics": {
+      "title": "Industrial Robotics"
+    }
   },
 
   "dashboardPage": {
@@ -143,17 +149,17 @@
     "openSim": "Open the simulator"
   },
 
+  "notFound": {
+    "message": "Page not found",
+    "backHome": "Back to Home"
+  },
+
   "loginPage": {
     "welcome": "Welcome",
     "subtitle": "Industrial Automation Learning Platform",
     "description": "Sign in to access your dashboard and track your progress",
-    "signInButton": "Sign In",
+    "signInButton": "Sign in with Kimi",
     "or": "or",
     "terms": "By signing in, you agree to the Terms of Use and Privacy Policy"
-  },
-
-  "notFound": {
-    "message": "Page not found",
-    "backHome": "Back to Home"
   }
 }
