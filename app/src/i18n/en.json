@@ -1,0 +1,159 @@
+{
+  "appName": "ElectroHub",
+  "welcome": "Welcome",
+  "dashboard": "Dashboard",
+  "courses": "Courses",
+  "login": "Login",
+  "logout": "Logout",
+  "level": "Level",
+  "xp": "XP Points",
+  "progress": "Progress",
+  "completed": "Completed",
+  "current": "In Progress",
+  "locked": "Locked",
+  "hours": "Hours",
+  "lessons": "Lessons",
+  "skills": "Skills",
+  "roadmap": "Learning Roadmap",
+  "activities": "Activities",
+  "quickActions": "Quick Actions",
+
+  "nav": {
+    "home": "Home",
+    "courses": "Courses",
+    "about": "About",
+    "contact": "Contact",
+    "dashboard": "Dashboard",
+    "login": "Login",
+    "logout": "Logout",
+    "register": "Register"
+  },
+
+  "hero": {
+    "badge": "Industrial Automation Learning Platform",
+    "title": "Learn Industrial Automation",
+    "subtitle": "The Interactive Way",
+    "description": "Embark on a comprehensive learning journey covering PLC,\nElectronics, and Industrial Robotics through interactive\nsimulations and hands-on lessons.",
+    "cta1": "Get Started",
+    "cta2": "Sign In",
+    "stats1": "Certified Content",
+    "stats2": "+1200 Learners",
+    "stats3": "Rated 4.9/5"
+  },
+
+  "features": {
+    "title": "Features",
+    "subtitle": "Why ElectroHub?",
+    "description": "A comprehensive platform combining theory and practice for efficient industrial automation learning",
+    "interactive": {
+      "title": "Interactive Lessons",
+      "desc": "Learn through interactive lessons with real-time simulation"
+    },
+    "simulation": {
+      "title": "3D Simulation",
+      "desc": "Test your circuits in a realistic simulation environment"
+    },
+    "xp": {
+      "title": "XP System",
+      "desc": "Earn points for every lesson completed and level up"
+    },
+    "certificates": {
+      "title": "Certified Certificates",
+      "desc": "Get certified completion certificates for every learning path"
+    },
+    "projects": {
+      "title": "Hands-on Projects",
+      "desc": "Apply what you learn to real-world industry projects"
+    },
+    "community": {
+      "title": "Active Community",
+      "desc": "Connect with learners and experts from around the world"
+    }
+  },
+
+  "coursesSection": {
+    "title": "Courses",
+    "subtitle": "Start Your Learning Journey",
+    "viewAll": "View All"
+  },
+
+  "courses": {
+    "title": "Courses",
+    "subtitle": "Start Your Learning Journey",
+    "viewAll": "View All",
+    "lessons": "lessons",
+    "hours": "hours",
+    "levels": {
+      "beginner": "Beginner",
+      "intermediate": "Intermediate",
+      "advanced": "Advanced"
+    }
+  },
+
+  "stats": {
+    "learners": "Learners",
+    "courses": "Courses",
+    "simulations": "Simulations",
+    "rating": "Rating"
+  },
+
+  "cta": {
+    "title": "Start Your Learning Journey Today",
+    "subtitle": "Join thousands of learners and gain new skills in the world of industrial automation",
+    "register": "Register",
+    "login": "Sign In"
+  },
+
+  "footer": {
+    "about": "ElectroHub is a comprehensive educational platform specialized in teaching industrial automation and electronics.",
+    "courses": "Courses",
+    "resources": "Resources",
+    "support": "Support",
+    "contact": "Contact Us",
+    "faq": "FAQ",
+    "blog": "Blog",
+    "privacy": "Privacy Policy",
+    "terms": "Terms of Use",
+    "rights": "All rights reserved  2025 ElectroHub"
+  },
+
+  "courseData": {
+    "plc": { "title": "PLC Programming" },
+    "power": { "title": "Power Electronics" },
+    "robotics": { "title": "Industrial Robotics" }
+  },
+
+  "dashboardPage": {
+    "welcome": "Welcome",
+    "learner": "Learner",
+    "trackProgress": "Track your progress in your automation learning journey",
+    "xpPoints": "XP Points",
+    "skillAnalysis": "Skill Analysis",
+    "skillAnalysisDesc": "Your progress in different automation areas",
+    "roadmapDesc": "Stages of your educational journey in the world of automation",
+    "recentActivities": "Recent Activities",
+    "noActivities": "No activities yet. Start learning a new lesson!",
+    "continueLearning": "Continue Learning",
+    "completeLesson": "Complete a Lesson",
+    "viewPaths": "View Paths",
+    "interactiveSim": "Interactive Simulator",
+    "continueIn": "Continue in",
+    "completingLesson": "Completing lesson... (Demo)",
+    "allPaths": "View all learning paths",
+    "openSim": "Open the simulator"
+  },
+
+  "loginPage": {
+    "welcome": "Welcome",
+    "subtitle": "Industrial Automation Learning Platform",
+    "description": "Sign in to access your dashboard and track your progress",
+    "signInButton": "Sign In",
+    "or": "or",
+    "terms": "By signing in, you agree to the Terms of Use and Privacy Policy"
+  },
+
+  "notFound": {
+    "message": "Page not found",
+    "backHome": "Back to Home"
+  }
+}
